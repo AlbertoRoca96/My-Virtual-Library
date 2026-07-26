@@ -124,6 +124,22 @@ alter table public.books enable row level security;
 alter table public.genres enable row level security;
 alter table public.book_genres enable row level security;
 
+drop policy if exists "profiles_select_own_or_public" on public.profiles;
+drop policy if exists "profiles_insert_own" on public.profiles;
+drop policy if exists "profiles_update_own" on public.profiles;
+
+drop policy if exists "books_select_own_or_public" on public.books;
+drop policy if exists "books_insert_own" on public.books;
+drop policy if exists "books_update_own" on public.books;
+drop policy if exists "books_delete_own" on public.books;
+
+drop policy if exists "genres_select_authenticated" on public.genres;
+drop policy if exists "genres_insert_authenticated" on public.genres;
+
+drop policy if exists "book_genres_select_visible_books" on public.book_genres;
+drop policy if exists "book_genres_insert_own" on public.book_genres;
+drop policy if exists "book_genres_delete_own" on public.book_genres;
+
 create policy "profiles_select_own_or_public"
 on public.profiles
 for select

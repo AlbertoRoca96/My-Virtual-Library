@@ -22,6 +22,8 @@ That script creates:
 
 No.
 
+Important: the Supabase "Server" connect prompt is for backend runtimes, API routes, workers, or edge functions. This project is currently a static Expo web build plus mobile client, so do not paste `SUPABASE_SECRET_KEY` into client env files, Expo public env vars, or GitHub Pages variables.
+
 For v1 we do not need a Supabase Edge Function for:
 - auth
 - books CRUD
@@ -63,7 +65,12 @@ Set these as **GitHub Actions repository variables**:
 - `EXPO_PUBLIC_SUPABASE_URL`
 - `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-Do not use a service role key in GitHub Pages builds.
+Do not put any of these into GitHub Pages variables for this app:
+- `SUPABASE_SECRET_KEY`
+- `service_role`
+- anything starting with `sb_secret_`
+
+Do not use `@supabase/server` in the GitHub Pages frontend build. That package is for server runtimes, not browser-shipped code.
 That would be galaxy-brain bad.
 
 ### For Expo / EAS later
@@ -100,7 +107,20 @@ You will just need:
 - Apple developer setup when you actually ship
 - EAS build configuration
 
-## 7. Recommended next implementation steps
+## 7. When would we actually use `@supabase/server`?
+
+Only when we add a real backend surface such as:
+- Supabase Edge Functions
+- Next.js / Remix / Express API routes
+- server-side webhook handlers
+- privileged admin scripts that are never shipped to the browser
+
+Until then, this app should stay on:
+- `@supabase/supabase-js`
+- publishable key only in public client env
+- RLS for safety
+
+## 8. Recommended next implementation steps
 
 1. run the SQL in Supabase
 2. test sign up and sign in

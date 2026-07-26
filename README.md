@@ -69,6 +69,9 @@ More setup notes live in:
 
 ## Web deployment
 
+Important: this GitHub Pages app should only use the Supabase project URL and publishable key. Do not put `SUPABASE_SECRET_KEY`, `sb_secret_*`, or service-role credentials into frontend env vars or GitHub Pages variables.
+
+
 This repo includes:
 
 - `.github/workflows/deploy-web.yml`
@@ -81,6 +84,9 @@ For GitHub Pages, set these **repository variables**:
 Then enable GitHub Pages to deploy from GitHub Actions.
 
 ## Mobile deployment
+
+You do not need `@supabase/server` for the current Expo web/mobile client. That package is for server runtimes only.
+
 
 For Android and iOS later, use Expo / EAS.
 
