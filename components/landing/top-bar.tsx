@@ -2,8 +2,8 @@ import { Text, View } from 'react-native';
 
 const actions = [
   { mark: 'Q', label: 'Search' },
-  { mark: 'P', label: 'Palette' },
-  { mark: 'S', label: 'Share' },
+  { mark: 'M', label: 'Mood' },
+  { mark: 'N', label: 'Notes' },
   { mark: 'G', label: 'Settings' },
 ];
 
@@ -15,7 +15,7 @@ export function TopBar({ shelfName }: TopBarProps) {
   return (
     <View className="flex-row flex-wrap items-center justify-between gap-4 rounded-[30px] border border-line bg-[#F7F2E9] px-5 py-4">
       <View className="gap-1">
-        <Text className="text-xs uppercase tracking-[2.5px] text-mist">Curated shelf</Text>
+        <Text className="text-xs uppercase tracking-[2.5px] text-mist">Private reading room</Text>
         <Text className="text-2xl text-ink" style={{ fontFamily: 'Georgia' }}>
           {shelfName}
         </Text>

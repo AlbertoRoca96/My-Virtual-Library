@@ -10,16 +10,16 @@ const entries = [
     body: 'Scan the ISBN, tidy the metadata, assign a few genres, and then stare at the cover like it personally owes you inspiration.',
   },
   {
-    title: 'Design direction',
+    title: 'Room tone',
     body: 'Warm parchment, dark ink, old-library softness, and enough visual drama to make a spreadsheet cry in the corner.',
   },
 ];
 
 export function JournalGrid() {
   return (
-    <View className="gap-4 md:flex-row">
-      {entries.map((entry) => (
-        <View key={entry.title} className="flex-1 rounded-[28px] border border-line bg-paper p-5">
+    <View className="gap-4 md:flex-row md:flex-wrap">
+      {entries.map((entry, index) => (
+        <View key={entry.title} className={`rounded-[28px] border border-line bg-paper p-5 ${index === 0 ? 'md:w-full' : 'md:flex-1'}`}>
           <Text className="text-xs uppercase tracking-[2px] text-mist">Shelf note</Text>
           <Text className="mt-3 text-2xl text-ink" style={{ fontFamily: 'Georgia' }}>
             {entry.title}

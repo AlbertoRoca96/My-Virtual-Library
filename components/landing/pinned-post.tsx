@@ -10,9 +10,9 @@ export function PinnedPost() {
           <View className="h-14 w-14 rounded-[18px] border border-[#6A5E55] bg-[#DCC38D]" />
           <View>
             <Text className="text-lg text-white" style={{ fontFamily: 'Georgia' }}>
-              myvirtualbookshelf reblogged
+              Private shelf note
             </Text>
-            <Text className="text-sm text-[#C9BBB0]">Pinned post • reading diary • shelf manifesto • 17 Feb 2022</Text>
+            <Text className="text-sm text-[#C9BBB0]">Reading diary • collection focus • 17 Feb 2022</Text>
           </View>
         </View>
         <View className="rounded-full border border-[#5A5049] px-3 py-2">
@@ -30,7 +30,7 @@ export function PinnedPost() {
         <View className="gap-4 md:flex-1">
           <View className="gap-3">
             <Text className="text-3xl leading-[42px] text-white" style={{ fontFamily: 'Georgia' }}>
-              This is where I spend all my time reblogging pictures of books instead of actually reducing the TBR.
+              This is where I keep the books that feel like tiny rooms I can walk back into whenever real life gets noisy.
             </Text>
             <Text className="text-base leading-8 text-[#D7CABB]">
               The shelf should feel intimate, a little over-curated, and slightly theatrical. It should look like the kind of place where a person has opinions about endpapers and owns too many editions of the same novel for entirely emotional reasons.
@@ -46,11 +46,11 @@ export function PinnedPost() {
           </View>
 
           <View className="flex-row items-center justify-between border-t border-[#4A423C] pt-4">
-            <Text className="text-sm text-[#C9BBB0]">2,903 notes • reblogged from bibliophile-at-heart</Text>
+            <Text className="text-sm text-[#C9BBB0]">Revisited often • kept near the top of the shelf</Text>
             <View className="flex-row gap-3">
-              <Text className="text-sm text-[#E6D9C8]">reblog</Text>
-              <Text className="text-sm text-[#E6D9C8]">heart</Text>
-              <Text className="text-sm text-[#E6D9C8]">more</Text>
+              <Text className="text-sm text-[#E6D9C8]">annotate</Text>
+              <Text className="text-sm text-[#E6D9C8]">revisit</Text>
+              <Text className="text-sm text-[#E6D9C8]">arrange</Text>
             </View>
           </View>
         </View>

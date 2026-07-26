@@ -1,10 +1,10 @@
 import { Text, View } from 'react-native';
 
 const metaItems = [
-  { label: 'Followers', value: '2.4k' },
-  { label: 'Following', value: '318' },
-  { label: 'Pinned posts', value: '07' },
-  { label: 'Ask box', value: 'Open' },
+  { label: 'Books catalogued', value: '124' },
+  { label: 'Current stack', value: '06' },
+  { label: 'Shelf notes', value: '18' },
+  { label: 'Reading mood', value: 'Quiet' },
 ];
 
 export function ProfileMetaStrip() {

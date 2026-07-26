@@ -110,15 +110,15 @@ export default function HomeScreen() {
       <Section
         eyebrow="Visual shelf"
         title="Scrapbook collage, not a product grid"
-        description="The collage is deliberately uneven now. It should feel like layered reblogs, saved art references, and shelf snapshots that drift into each other instead of obediently aligning like corporate children."
+        description="The collage is deliberately uneven now. It should feel like tucked-away art references, shelf snapshots, and little fragments of atmosphere arranged for one reader, not a performance for strangers."
       >
         <MoodboardCollage />
       </Section>
 
       <Section
-        eyebrow="Feed fragments"
-        title="Actual faux posts, not just tidy content blocks"
-        description="Now the page leans harder into the profile-feed fantasy: text posts, shelf updates, ask-style notes, and staggered card positioning that feels a little messy in the charming way, not the broken way."
+        eyebrow="Private notes"
+        title="The sanctuary should feel lived-in"
+        description="Instead of a social feed, these are personal shelf fragments: mood notes, arrangement rituals, and reminders worth keeping near the top of the page because they say something true about how you read."
       >
         <View className="gap-5 md:flex-row md:items-start">
           <View className="md:flex-[1.15]">

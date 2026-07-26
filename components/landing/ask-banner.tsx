@@ -3,12 +3,12 @@ import { Text, View } from 'react-native';
 export function AskBanner() {
   return (
     <View className="items-center gap-4 rounded-[32px] border border-line bg-paper px-6 py-6">
-      <Text className="text-xs uppercase tracking-[2.5px] text-mist">Ask box energy</Text>
+      <Text className="text-xs uppercase tracking-[2.5px] text-mist">Shelf intention</Text>
       <Text className="text-center text-4xl text-ink" style={{ fontFamily: 'Georgia' }}>
-        Send me things!
+        A room for the books and for the person arranging them.
       </Text>
       <Text className="max-w-2xl text-center text-base leading-8 text-mist">
-        Recommendations, edition chatter, dramatic reading slumps, cursed TBR confessions, all of it. The page should feel alive, not like a sterile product brochure pretending to have hobbies.
+        This page is not for performing taste to strangers. It is for collecting, annotating, arranging, and making a reading life feel visible in one quiet beautiful place.
       </Text>
     </View>
   );

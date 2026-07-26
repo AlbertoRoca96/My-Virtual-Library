@@ -11,7 +11,7 @@ type ProfileHeroProps = {
 
 const profileHighlights = [
   'Vintage illustration energy',
-  'Private catalogue plus public shelf feeling',
+  'Personal catalogue sanctuary',
   'Built for quiet collecting and dramatic TBR piles',
 ];
 
@@ -68,13 +68,13 @@ export function ProfileHero({ actions, bio, handle, subtitle, title }: ProfileHe
           </Text>
           <View className="mt-4 flex-row flex-wrap gap-2">
             <View className="rounded-full border border-line bg-paper px-3 py-2">
-              <Text className="text-xs text-ink">Book blogger energy</Text>
+              <Text className="text-xs text-ink">Personal reading room</Text>
             </View>
             <View className="rounded-full border border-line bg-paper px-3 py-2">
-              <Text className="text-xs text-ink">Pinned post main character</Text>
+              <Text className="text-xs text-ink">Private shelf diary</Text>
             </View>
             <View className="rounded-full border border-line bg-paper px-3 py-2">
-              <Text className="text-xs text-ink">Ask box enabled</Text>
+              <Text className="text-xs text-ink">Quietly over-curated</Text>
             </View>
           </View>
         </View>
