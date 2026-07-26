@@ -44,5 +44,12 @@ if (!fs.existsSync(distDir)) {
 }
 
 walk(distDir);
+
+const indexHtmlPath = path.join(distDir, 'index.html');
+const notFoundHtmlPath = path.join(distDir, '404.html');
+if (fs.existsSync(indexHtmlPath)) {
+  fs.copyFileSync(indexHtmlPath, notFoundHtmlPath);
+}
+
 fs.writeFileSync(path.join(distDir, '.nojekyll'), '');
 console.log(`Prepared dist for GitHub Pages under ${cleanBasePath}`);
