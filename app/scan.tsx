@@ -71,6 +71,7 @@ export default function ScanScreen() {
   const [cameraAvailable, setCameraAvailable] = useState<boolean | null>(null);
   const [cameraError, setCameraError] = useState('');
   const [cameraDebug, setCameraDebug] = useState('initializing');
+  const [previewReady, setPreviewReady] = useState(false);
   const [lookupMessage, setLookupMessage] = useState('');
   const [lookupError, setLookupError] = useState('');
   const [lookupPending, setLookupPending] = useState(false);
@@ -138,6 +139,7 @@ export default function ScanScreen() {
     setCameraError('');
     setLookupError('');
     setLookupMessage('');
+    setPreviewReady(false);
     scanInFlightRef.current = false;
 
     if (cameraAvailable === false && !canAttemptCameraOnThisPlatform) {
@@ -282,18 +284,30 @@ export default function ScanScreen() {
             <Text className="text-sm leading-6 text-mist">
               Point the camera at the barcode on the back of the book. We pause the scanner after one hit so it does not machine-gun the same ISBN five times like an overexcited pigeon.
             </Text>
-            <View className="overflow-hidden rounded-[28px] border border-line bg-night">
+            <View className="h-[320px] overflow-hidden rounded-[28px] border border-line bg-night">
               <CameraView
-                style={{ height: 320 }}
+                style={{ flex: 1, width: '100%' }}
                 facing="back"
+                onCameraReady={() => {
+                  setPreviewReady(true);
+                  setCameraDebug('Camera preview is ready');
+                }}
                 onMountError={(event) => {
                   setCameraEnabled(false);
+                  setPreviewReady(false);
                   setCameraDebug(event.message || 'CameraView mount error');
                   setCameraError(event.message || 'The camera failed to start here.');
                 }}
                 onBarcodeScanned={cameraEnabled ? handleBarcodeScanned : undefined}
                 barcodeScannerSettings={{ barcodeTypes }}
               />
+              {!previewReady ? (
+                <View className="absolute inset-0 items-center justify-center px-6">
+                  <Text className="text-center text-sm leading-6 text-parchment">
+                    Waiting for camera preview to appear… if this never changes, Safari is being weird and we will bully it next.
+                  </Text>
+                </View>
+              ) : null}
             </View>
             <View className="flex-row flex-wrap gap-3">
               <Button label="Pause scanner" variant="secondary" onPress={() => setCameraEnabled(false)} />
@@ -315,6 +329,7 @@ export default function ScanScreen() {
           <Text className="text-sm leading-6 text-ink">cameraEnabled: {formatDebugValue(cameraEnabled)}</Text>
           <Text className="text-sm leading-6 text-ink">cameraAvailable: {formatDebugValue(cameraAvailable)}</Text>
           <Text className="text-sm leading-6 text-ink">lookupPending: {formatDebugValue(lookupPending)}</Text>
+          <Text className="text-sm leading-6 text-ink">previewReady: {formatDebugValue(previewReady)}</Text>
           <Text className="text-sm leading-6 text-ink">cameraDebug: {cameraDebug}</Text>
         </View>
 
