@@ -65,6 +65,7 @@ export default function RootLayout() {
             <Stack.Screen name="library" options={{ title: 'My Library' }} />
             <Stack.Screen name="add-book" options={{ title: 'Add a Book' }} />
             <Stack.Screen name="scan" options={{ title: 'Scan ISBN' }} />
+          <Stack.Screen name="profile" options={{ title: 'Edit Sanctuary' }} />
           <Stack.Screen name="[...slug]" options={{ headerShown: false }} />
           </Stack>
         </AuthProvider>

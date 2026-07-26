@@ -6,16 +6,13 @@ type ProfileHeroProps = {
   handle: string;
   subtitle: string;
   bio: string;
+  artworkTitle: string;
+  highlights: string[];
+  chips: string[];
   actions: ReactNode;
 };
 
-const profileHighlights = [
-  'Vintage illustration energy',
-  'Personal catalogue sanctuary',
-  'Built for quiet collecting and dramatic TBR piles',
-];
-
-export function ProfileHero({ actions, bio, handle, subtitle, title }: ProfileHeroProps) {
+export function ProfileHero({ actions, artworkTitle, bio, chips, handle, highlights, subtitle, title }: ProfileHeroProps) {
   return (
     <View className="gap-6 rounded-[38px] border border-line bg-paper px-6 py-7 md:flex-row md:items-center md:justify-between">
       <View className="flex-1 gap-6 md:max-w-[42%]">
@@ -27,7 +24,7 @@ export function ProfileHero({ actions, bio, handle, subtitle, title }: ProfileHe
                   <View className="flex-1 items-center justify-center rounded-[70px] border border-[#5D554A] bg-[#EFD9A0]">
                     <Text className="text-center text-sm uppercase tracking-[3px] text-[#5D554A]">Artwork</Text>
                     <Text className="mt-3 px-6 text-center text-2xl text-[#5D554A]" style={{ fontFamily: 'Georgia' }}>
-                      Alice-in-the-library atmosphere
+                      {artworkTitle}
                     </Text>
                   </View>
                 </View>
@@ -54,7 +51,7 @@ export function ProfileHero({ actions, bio, handle, subtitle, title }: ProfileHe
         </View>
 
         <View className="flex-row flex-wrap gap-3">
-          {profileHighlights.map((highlight) => (
+          {highlights.map((highlight) => (
             <View key={highlight} className="rounded-full border border-line bg-parchment px-4 py-2">
               <Text className="text-sm text-ink">{highlight}</Text>
             </View>
@@ -63,19 +60,13 @@ export function ProfileHero({ actions, bio, handle, subtitle, title }: ProfileHe
 
         <View className="rounded-[30px] border border-line bg-[#F8F3EA] p-5">
           <Text className="text-xs uppercase tracking-[2px] text-mist">About this shelf</Text>
-          <Text className="mt-3 text-base leading-8 text-ink">
-            A dreamy catalogue space for collecting editions, curating little moodboard moments, and pretending every stack of books is an intentional still life instead of a cry for help.
-          </Text>
+          <Text className="mt-3 text-base leading-8 text-ink">{bio}</Text>
           <View className="mt-4 flex-row flex-wrap gap-2">
-            <View className="rounded-full border border-line bg-paper px-3 py-2">
-              <Text className="text-xs text-ink">Personal reading room</Text>
-            </View>
-            <View className="rounded-full border border-line bg-paper px-3 py-2">
-              <Text className="text-xs text-ink">Private shelf diary</Text>
-            </View>
-            <View className="rounded-full border border-line bg-paper px-3 py-2">
-              <Text className="text-xs text-ink">Quietly over-curated</Text>
-            </View>
+            {chips.map((chip) => (
+              <View key={chip} className="rounded-full border border-line bg-paper px-3 py-2">
+                <Text className="text-xs text-ink">{chip}</Text>
+              </View>
+            ))}
           </View>
         </View>
 

@@ -1,42 +1,18 @@
 import { Text, View } from 'react-native';
 
-const feedEntries = [
-  {
-    type: 'Reading mood',
-    title: 'Currently romanticizing',
-    body: 'Illustrated children\'s classics, foxed paperbacks, and covers that look like they survived a thunderstorm in 1913.',
-    meta: 'Shelf note • revisited this week',
-    tone: '#E7D8C4',
-  },
-  {
-    type: 'Shelf ritual',
-    title: 'Shelf status',
-    body: 'Still rearranging by mood, then color, then by how loudly each spine whispers “pick me next.” Entirely scientific process.',
-    meta: 'Arrangement log • late evening energy',
-    tone: '#EFDCCF',
-  },
-  {
-    type: 'Personal reminder',
-    title: 'Inbox energy',
-    body: 'Keep space for recommendation lists, duplicate editions, and dramatic reading slumps. This whole shelf is here to be useful, not minimal.',
-    meta: 'Private note • keep visible',
-    tone: '#E4D6CA',
-  },
-];
-
-function SanctuaryCard({
-  body,
-  meta,
-  title,
-  tone,
-  type,
-}: {
+type ShelfEntry = {
+  type: string;
+  title: string;
   body: string;
   meta: string;
-  title: string;
   tone: string;
-  type: string;
-}) {
+};
+
+type ShelfFeedProps = {
+  entries: ShelfEntry[];
+};
+
+function SanctuaryCard({ body, meta, title, tone, type }: ShelfEntry) {
   return (
     <View className="rounded-[28px] border border-line shadow-card" style={{ backgroundColor: tone }}>
       <View className="flex-row items-center gap-3 border-b border-[#B9AB9D] px-5 py-4">
@@ -65,11 +41,11 @@ function SanctuaryCard({
   );
 }
 
-export function ShelfFeed() {
+export function ShelfFeed({ entries }: ShelfFeedProps) {
   return (
     <View className="gap-5">
-      {feedEntries.map((entry, index) => (
-        <View key={entry.title} className={index % 2 === 1 ? 'md:ml-8' : 'md:mr-8'}>
+      {entries.map((entry, index) => (
+        <View key={`${entry.type}-${entry.title}-${index}`} className={index % 2 === 1 ? 'md:ml-8' : 'md:mr-8'}>
           <SanctuaryCard {...entry} />
         </View>
       ))}

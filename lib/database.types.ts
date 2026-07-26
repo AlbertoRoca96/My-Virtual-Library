@@ -5,6 +5,44 @@ export type Genre = {
   name: string;
 };
 
+export type Profile = {
+  id: string;
+  username: string | null;
+  displayName: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+  shelfSlug: string | null;
+  isPublic: boolean;
+  themePreference: string;
+  shelfTitle: string | null;
+  shelfSubtitle: string | null;
+  shelfDescription: string | null;
+  readingMood: string | null;
+  privateNote: string | null;
+  collectionFocus: string | null;
+  artworkTitle: string | null;
+  highlightOne: string | null;
+  highlightTwo: string | null;
+  highlightThree: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProfileInput = {
+  displayName?: string;
+  bio?: string;
+  shelfTitle?: string;
+  shelfSubtitle?: string;
+  shelfDescription?: string;
+  readingMood?: string;
+  privateNote?: string;
+  collectionFocus?: string;
+  artworkTitle?: string;
+  highlightOne?: string;
+  highlightTwo?: string;
+  highlightThree?: string;
+};
+
 export type Book = {
   id: string;
   title: string;
