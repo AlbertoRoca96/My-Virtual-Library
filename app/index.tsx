@@ -51,7 +51,7 @@ export default function HomeScreen() {
     return {
       bookCount: sourceBooks.length,
       genreCount: new Set(genreNames).size,
-      moodboardCount: 3,
+      moodboardCount: 4,
       statusLabel: formatStatusLabel(statuses),
     };
   }, [booksQuery.data, user]);
@@ -109,22 +109,22 @@ export default function HomeScreen() {
 
       <Section
         eyebrow="Visual shelf"
-        title="Artwork-first, collage-forward, and delightfully bookish"
-        description="The homepage should feel like a public shelf blog: part profile, part diary, part museum gift shop if the gift shop had opinions about gothic paperbacks."
+        title="Scrapbook collage, not a product grid"
+        description="The collage is deliberately uneven now. It should feel like layered reblogs, saved art references, and shelf snapshots that drift into each other instead of obediently aligning like corporate children."
       >
         <MoodboardCollage />
       </Section>
 
       <Section
         eyebrow="Feed fragments"
-        title="Little social blocks make it feel more lived-in"
-        description="This is the Tumblr-ish layer: pinned thoughts, shelf updates, ask box energy, and fragments that imply a real reader lives here instead of a dashboard with delusions of grandeur."
+        title="Actual faux posts, not just tidy content blocks"
+        description="Now the page leans harder into the profile-feed fantasy: text posts, shelf updates, ask-style notes, and staggered card positioning that feels a little messy in the charming way, not the broken way."
       >
-        <View className="gap-4 md:flex-row">
-          <View className="md:flex-[1.2]">
+        <View className="gap-5 md:flex-row md:items-start">
+          <View className="md:flex-[1.15]">
             <ShelfFeed />
           </View>
-          <View className="md:flex-1">
+          <View className="md:flex-1 md:pt-12">
             <JournalGrid />
           </View>
         </View>
