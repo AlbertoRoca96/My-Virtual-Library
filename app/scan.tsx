@@ -3,7 +3,7 @@ import { CameraView, BarcodeScanningResult, BarcodeType, useCameraPermissions } 
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { Alert, ScrollView, Text, View } from 'react-native';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { AuthCard } from '@/features/auth/auth-card';
@@ -37,6 +37,8 @@ export default function ScanScreen() {
   const [lookupMessage, setLookupMessage] = useState('');
   const [lookupError, setLookupError] = useState('');
   const [lookupPending, setLookupPending] = useState(false);
+  const [lastScannedIsbn, setLastScannedIsbn] = useState('');
+  const scanInFlightRef = useRef(false);
   const {
     control,
     handleSubmit,
@@ -77,6 +79,9 @@ export default function ScanScreen() {
 
   async function enableCamera() {
     setCameraError('');
+    setLookupError('');
+    setLookupMessage('');
+    scanInFlightRef.current = false;
 
     if (cameraAvailable === false) {
       setCameraError('No camera is available here. Use manual ISBN lookup below instead.');
@@ -99,7 +104,13 @@ export default function ScanScreen() {
   }
 
   async function hydrateFromIsbn(rawValue?: string) {
+    if (lookupPending) {
+      return;
+    }
+
     const isbn = sanitizeIsbn(rawValue ?? getValues('isbn'));
+    reset({ ...getValues(), isbn });
+
     if (!isValidIsbnLength(isbn)) {
       setLookupError('Use a 10 or 13 digit ISBN before lookup.');
       setLookupMessage('');
@@ -133,14 +144,26 @@ export default function ScanScreen() {
   }
 
   function handleBarcodeScanned(result: BarcodeScanningResult) {
-    const isbn = sanitizeIsbn(result.data);
-    if (!isValidIsbnLength(isbn)) {
-      setLookupError('Scanned code was not a usable ISBN. Try again or type it manually.');
+    if (scanInFlightRef.current || lookupPending) {
       return;
     }
 
+    scanInFlightRef.current = true;
+    const isbn = sanitizeIsbn(result.data);
+    if (!isValidIsbnLength(isbn)) {
+      setLookupMessage('');
+      setLookupError('Scanned code was not a usable ISBN. Try again, or type it manually like the civilized fallback it is.');
+      scanInFlightRef.current = false;
+      return;
+    }
+
+    setLastScannedIsbn(isbn);
+    setLookupError('');
+    setLookupMessage(`Scanned ${isbn}. Looking up book data...`);
     setCameraEnabled(false);
-    void hydrateFromIsbn(isbn);
+    void hydrateFromIsbn(isbn).finally(() => {
+      scanInFlightRef.current = false;
+    });
   }
 
   const onSubmit = (values: BookFormValues) => {
@@ -196,6 +219,9 @@ export default function ScanScreen() {
 
         {cameraEnabled && permissionState === 'granted' && cameraAvailable !== false ? (
           <View className="gap-4">
+            <Text className="text-sm leading-6 text-mist">
+              Point the camera at the barcode on the back of the book. We pause the scanner after one hit so it does not machine-gun the same ISBN five times like an overexcited pigeon.
+            </Text>
             <View className="overflow-hidden rounded-[28px] border border-line bg-night">
               <CameraView
                 style={{ height: 320 }}
@@ -215,6 +241,13 @@ export default function ScanScreen() {
           </View>
         ) : null}
 
+        {!cameraEnabled && permissionState === 'granted' && cameraAvailable !== false ? (
+          <View className="flex-row flex-wrap gap-3">
+            <Button label={lastScannedIsbn ? 'Scan another book' : 'Open scanner'} variant="secondary" onPress={() => void enableCamera()} />
+          </View>
+        ) : null}
+
+        {lastScannedIsbn ? <Text className="text-sm text-mist">Last scanned ISBN: {lastScannedIsbn}</Text> : null}
         {cameraError ? <Text className="text-sm text-red-700">{cameraError}</Text> : null}
         {lookupMessage ? <Text className="text-sm text-accent">{lookupMessage}</Text> : null}
         {lookupError ? <Text className="text-sm text-red-700">{lookupError}</Text> : null}

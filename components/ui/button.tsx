@@ -5,9 +5,10 @@ type ButtonProps = {
   variant?: 'primary' | 'secondary';
   onPress?: () => void;
   disabled?: boolean;
+  className?: string;
 };
 
-export function Button({ label, variant = 'primary', onPress, disabled = false }: ButtonProps) {
+export function Button({ label, variant = 'primary', onPress, disabled = false, className = '' }: ButtonProps) {
   const base = 'items-center rounded-full px-5 py-3';
   const styles =
     variant === 'primary'
@@ -16,7 +17,7 @@ export function Button({ label, variant = 'primary', onPress, disabled = false }
   const textStyles = variant === 'primary' ? 'text-parchment' : 'text-ink';
 
   return (
-    <Pressable className={`${base} ${styles} ${disabled ? 'opacity-50' : ''}`} onPress={onPress} disabled={disabled}>
+    <Pressable className={`${base} ${styles} ${disabled ? 'opacity-50' : ''} ${className}`.trim()} onPress={onPress} disabled={disabled}>
       <Text className={`text-base font-semibold ${textStyles}`}>{label}</Text>
     </Pressable>
   );

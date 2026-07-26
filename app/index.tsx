@@ -155,25 +155,29 @@ export default function HomeScreen() {
   const previewBooks = books.slice(0, 4);
 
   const heroActions = (
-    <>
-      <Button label="Browse library" onPress={() => router.push('/library')} />
-      <View className="flex-row flex-wrap gap-3">
-        <View className="min-w-[180px] flex-1">
-          <Button label="Edit sanctuary" variant="secondary" onPress={() => router.push('/profile')} />
+    <View className="gap-3">
+      <View className="gap-3 md:flex-row md:flex-wrap">
+        <View className="w-full md:min-w-[180px] md:flex-1">
+          <Button className="w-full" label="Browse library" onPress={() => router.push('/library')} />
         </View>
-        <View className="min-w-[180px] flex-1">
-          <Button label="Add book" variant="secondary" onPress={() => router.push('/add-book')} />
+        <View className="w-full md:min-w-[180px] md:flex-1">
+          <Button className="w-full" label="Scan ISBN" variant="secondary" onPress={() => router.push('/scan')} />
         </View>
-        <View className="min-w-[180px] flex-1">
-          <Button label="Scan ISBN" variant="secondary" onPress={() => router.push('/scan')} />
+      </View>
+      <View className="gap-3 md:flex-row md:flex-wrap">
+        <View className="w-full md:min-w-[180px] md:flex-1">
+          <Button className="w-full" label="Edit sanctuary" variant="secondary" onPress={() => router.push('/profile')} />
+        </View>
+        <View className="w-full md:min-w-[180px] md:flex-1">
+          <Button className="w-full" label="Add book" variant="secondary" onPress={() => router.push('/add-book')} />
         </View>
         {user ? (
-          <View className="min-w-[180px] flex-1">
-            <Button label="Sign out" variant="secondary" onPress={() => void supabase.auth.signOut()} />
+          <View className="w-full md:min-w-[180px] md:flex-1">
+            <Button className="w-full" label="Sign out" variant="secondary" onPress={() => void supabase.auth.signOut()} />
           </View>
         ) : null}
       </View>
-    </>
+    </View>
   );
 
   return (

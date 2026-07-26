@@ -14,16 +14,16 @@ type ProfileHeroProps = {
 
 export function ProfileHero({ actions, artworkTitle, bio, chips, handle, highlights, subtitle, title }: ProfileHeroProps) {
   return (
-    <View className="gap-6 rounded-[38px] border border-line bg-paper px-6 py-7 md:flex-row md:items-center md:justify-between">
-      <View className="flex-1 gap-6 md:max-w-[42%]">
+    <View className="gap-5 rounded-[32px] border border-line bg-paper px-5 py-6 md:gap-6 md:rounded-[38px] md:px-6 md:py-7 md:flex-row md:items-center md:justify-between">
+      <View className="flex-1 gap-5 md:gap-6 md:max-w-[42%]">
         <View className="gap-4">
-          <View className="h-[320px] rounded-[34px] border border-[#C3B39C] bg-[#E5D5B3] p-4 shadow-card">
-            <View className="flex-1 rounded-[28px] border border-[#6F665D] bg-[#F0E1B8] px-5 py-6">
-              <View className="flex-1 items-center justify-center rounded-[22px] border border-[#6F665D] bg-[#F7EBCB]">
-                <View className="h-48 w-40 rounded-[90px] border-[10px] border-[#5D554A] bg-[#E4C682] p-3">
+          <View className="h-[240px] rounded-[28px] border border-[#C3B39C] bg-[#E5D5B3] p-3 shadow-card md:h-[320px] md:rounded-[34px] md:p-4">
+            <View className="flex-1 rounded-[24px] border border-[#6F665D] bg-[#F0E1B8] px-4 py-5 md:rounded-[28px] md:px-5 md:py-6">
+              <View className="flex-1 items-center justify-center rounded-[20px] border border-[#6F665D] bg-[#F7EBCB] md:rounded-[22px]">
+                <View className="h-36 w-28 rounded-[70px] border-[8px] border-[#5D554A] bg-[#E4C682] p-3 md:h-48 md:w-40 md:rounded-[90px] md:border-[10px]">
                   <View className="flex-1 items-center justify-center rounded-[70px] border border-[#5D554A] bg-[#EFD9A0]">
                     <Text className="text-center text-sm uppercase tracking-[3px] text-[#5D554A]">Artwork</Text>
-                    <Text className="mt-3 px-6 text-center text-2xl text-[#5D554A]" style={{ fontFamily: 'Georgia' }}>
+                    <Text className="mt-3 px-4 text-center text-xl text-[#5D554A] md:px-6 md:text-2xl" style={{ fontFamily: 'Georgia' }}>
                       {artworkTitle}
                     </Text>
                   </View>
@@ -32,7 +32,7 @@ export function ProfileHero({ actions, artworkTitle, bio, chips, handle, highlig
             </View>
           </View>
 
-          <View className="rounded-[26px] border border-line bg-parchment px-5 py-4">
+          <View className="rounded-[22px] border border-line bg-parchment px-4 py-4 md:rounded-[26px] md:px-5">
             <Text className="text-xs uppercase tracking-[2px] text-mist">Shelf memo</Text>
             <Text className="mt-3 text-lg leading-8 text-ink" style={{ fontFamily: 'Georgia' }}>
               {subtitle}
@@ -41,13 +41,13 @@ export function ProfileHero({ actions, artworkTitle, bio, chips, handle, highlig
         </View>
       </View>
 
-      <View className="flex-1 gap-6 md:max-w-[52%]">
+      <View className="flex-1 gap-5 md:gap-6 md:max-w-[52%]">
         <View className="gap-3">
           <Text className="text-xs uppercase tracking-[2.5px] text-mist">{handle}</Text>
-          <Text className="text-5xl leading-[62px] text-ink md:text-6xl md:leading-[78px]" style={{ fontFamily: 'Georgia' }}>
+          <Text className="text-4xl leading-[50px] text-ink md:text-6xl md:leading-[78px]" style={{ fontFamily: 'Georgia' }}>
             {title}
           </Text>
-          <Text className="max-w-2xl text-lg leading-8 text-mist">{bio}</Text>
+          <Text className="max-w-2xl text-base leading-7 text-mist md:text-lg md:leading-8">{bio}</Text>
         </View>
 
         <View className="flex-row flex-wrap gap-3">
@@ -58,9 +58,9 @@ export function ProfileHero({ actions, artworkTitle, bio, chips, handle, highlig
           ))}
         </View>
 
-        <View className="rounded-[30px] border border-line bg-[#F8F3EA] p-5">
+        <View className="rounded-[24px] border border-line bg-[#F8F3EA] p-4 md:rounded-[30px] md:p-5">
           <Text className="text-xs uppercase tracking-[2px] text-mist">About this shelf</Text>
-          <Text className="mt-3 text-base leading-8 text-ink">{bio}</Text>
+          <Text className="mt-3 text-base leading-7 text-ink md:leading-8">{bio}</Text>
           <View className="mt-4 flex-row flex-wrap gap-2">
             {chips.map((chip) => (
               <View key={chip} className="rounded-full border border-line bg-paper px-3 py-2">
