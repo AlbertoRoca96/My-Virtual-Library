@@ -8,7 +8,7 @@ type TextFieldProps = {
   error?: string;
   multiline?: boolean;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
-  keyboardType?: 'default' | 'email-address';
+  keyboardType?: 'default' | 'email-address' | 'numeric';
 };
 
 export function TextField({

@@ -101,6 +101,9 @@ export async function createBook(input: BookInput) {
       isbn_10: cleanedIsbn10,
       isbn_13: cleanedIsbn13,
       description: input.description?.trim() || null,
+      published_date: input.publishedDate?.trim() || null,
+      cover_url: input.coverUrl?.trim() || null,
+      page_count: input.pageCount ?? null,
       reading_status: input.readingStatus ?? 'owned',
     })
     .select('id')

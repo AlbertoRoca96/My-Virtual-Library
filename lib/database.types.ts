@@ -67,5 +67,8 @@ export type BookInput = {
   isbn?: string;
   description?: string;
   readingStatus?: ReadingStatus;
+  publishedDate?: string;
+  coverUrl?: string;
+  pageCount?: number;
   genres: string[];
 };
