@@ -3,7 +3,7 @@ import { CameraView, BarcodeScanningResult, BarcodeType, useCameraPermissions } 
 import { useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { Alert, ScrollView, Text, View } from 'react-native';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { AuthCard } from '@/features/auth/auth-card';
@@ -31,7 +31,9 @@ export default function ScanScreen() {
   const { user, loading } = useAuth();
   const createBook = useCreateBook();
   const [permission, requestPermission] = useCameraPermissions();
-  const [cameraEnabled, setCameraEnabled] = useState(true);
+  const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [cameraAvailable, setCameraAvailable] = useState<boolean | null>(null);
+  const [cameraError, setCameraError] = useState('');
   const [lookupMessage, setLookupMessage] = useState('');
   const [lookupError, setLookupError] = useState('');
   const [lookupPending, setLookupPending] = useState(false);
@@ -46,11 +48,55 @@ export default function ScanScreen() {
     defaultValues,
   });
 
+  useEffect(() => {
+    let active = true;
+
+    CameraView.isAvailableAsync()
+      .then((available) => {
+        if (active) {
+          setCameraAvailable(available);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setCameraAvailable(false);
+          setCameraError('This device or browser is not exposing a usable camera. Manual ISBN lookup still works below.');
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const permissionState = useMemo(() => {
     if (!permission) return 'unknown';
     if (permission.granted) return 'granted';
     return 'denied';
   }, [permission]);
+
+  async function enableCamera() {
+    setCameraError('');
+
+    if (cameraAvailable === false) {
+      setCameraError('No camera is available here. Use manual ISBN lookup below instead.');
+      return;
+    }
+
+    try {
+      const result = await requestPermission();
+      if (!result.granted) {
+        setCameraEnabled(false);
+        setCameraError('Camera permission was denied. You can still paste an ISBN and lookup the book manually.');
+        return;
+      }
+
+      setCameraEnabled(true);
+    } catch (error) {
+      setCameraEnabled(false);
+      setCameraError(error instanceof Error ? error.message : 'Could not request camera permission.');
+    }
+  }
 
   async function hydrateFromIsbn(rawValue?: string) {
     const isbn = sanitizeIsbn(rawValue ?? getValues('isbn'));
@@ -101,7 +147,7 @@ export default function ScanScreen() {
     createBook.mutate(
       {
         ...values,
-        isbn: sanitizeIsbn(values.isbn ?? ''),
+        isbn: sanitizeIsbn(values.isbn),
         genres: parseGenreString(values.genres),
       },
       {
@@ -131,38 +177,45 @@ export default function ScanScreen() {
           Scan ISBN
         </Text>
         <Text className="text-base leading-7 text-mist">
-          This works on Android and on the web when camera permission is allowed. Scan first, let Open Library prefill what it can, then edit whatever it gets wrong because metadata on the internet is never fully trustworthy.
+          We ask for camera access first on every device. If scanning works, great. If the browser or phone behaves like a tiny goblin, manual ISBN lookup still lets you autofill and edit before saving.
         </Text>
       </View>
 
       <View className="gap-4 rounded-[28px] border border-line bg-paper p-5">
-        {permissionState !== 'granted' ? (
+        {!cameraEnabled ? (
           <View className="gap-3 rounded-[24px] border border-dashed border-accent bg-[#EADFCF] p-5">
             <Text className="text-lg text-ink" style={{ fontFamily: 'Georgia' }}>
               Camera access needed
             </Text>
             <Text className="text-base leading-7 text-mist">
-              Give camera permission to scan on Android or web. If the browser or device refuses, manual ISBN lookup still works right below because we believe in contingency plans.
+              Allow camera access to scan on Android or web. If that does not work on this device, manual ISBN lookup below will still do the job.
             </Text>
-            <Button label="Allow camera" onPress={() => void requestPermission()} />
+            <Button label="Allow camera" onPress={() => void enableCamera()} />
           </View>
-        ) : (
+        ) : null}
+
+        {cameraEnabled && permissionState === 'granted' && cameraAvailable !== false ? (
           <View className="gap-4">
             <View className="overflow-hidden rounded-[28px] border border-line bg-night">
               <CameraView
                 style={{ height: 320 }}
                 facing="back"
+                onMountError={(event) => {
+                  setCameraEnabled(false);
+                  setCameraError(event.message || 'The camera failed to start here.');
+                }}
                 onBarcodeScanned={cameraEnabled ? handleBarcodeScanned : undefined}
                 barcodeScannerSettings={{ barcodeTypes }}
               />
             </View>
             <View className="flex-row flex-wrap gap-3">
-              <Button label={cameraEnabled ? 'Pause scanner' : 'Resume scanner'} variant="secondary" onPress={() => setCameraEnabled((value) => !value)} />
+              <Button label="Pause scanner" variant="secondary" onPress={() => setCameraEnabled(false)} />
               <Button label="Lookup current ISBN" variant="secondary" onPress={() => void hydrateFromIsbn()} disabled={lookupPending} />
             </View>
           </View>
-        )}
+        ) : null}
 
+        {cameraError ? <Text className="text-sm text-red-700">{cameraError}</Text> : null}
         {lookupMessage ? <Text className="text-sm text-accent">{lookupMessage}</Text> : null}
         {lookupError ? <Text className="text-sm text-red-700">{lookupError}</Text> : null}
       </View>
