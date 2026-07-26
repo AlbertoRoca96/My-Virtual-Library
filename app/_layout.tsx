@@ -18,14 +18,13 @@ function GithubPagesRouteNormalizer() {
   const router = useRouter();
 
   useEffect(() => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') {
+    if (Platform.OS !== 'web') {
       return;
     }
 
-    const rawPathname = window.location.pathname;
     const duplicatedBasePath = `${GITHUB_PAGES_BASE_SEGMENT}${GITHUB_PAGES_BASE_SEGMENT}`;
 
-    let normalizedPathname = rawPathname;
+    let normalizedPathname = pathname;
     if (normalizedPathname.startsWith(duplicatedBasePath)) {
       normalizedPathname = normalizedPathname.slice(GITHUB_PAGES_BASE_SEGMENT.length);
     }
@@ -65,8 +64,8 @@ export default function RootLayout() {
             <Stack.Screen name="library" options={{ title: 'My Library' }} />
             <Stack.Screen name="add-book" options={{ title: 'Add a Book' }} />
             <Stack.Screen name="scan" options={{ title: 'Scan ISBN' }} />
-          <Stack.Screen name="profile" options={{ title: 'Edit Sanctuary' }} />
-          <Stack.Screen name="[...slug]" options={{ headerShown: false }} />
+            <Stack.Screen name="profile" options={{ title: 'Edit Sanctuary' }} />
+            <Stack.Screen name="[...slug]" options={{ headerShown: false }} />
           </Stack>
         </AuthProvider>
       </QueryClientProvider>
