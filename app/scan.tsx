@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CameraView, BarcodeScanningResult, BarcodeType, useCameraPermissions } from 'expo-camera';
-import { useRouter } from 'expo-router';
+import { ErrorBoundaryProps, useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { Alert, Platform, ScrollView, Text, View } from 'react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,41 @@ const defaultValues: BookFormValues = {
 
 const barcodeTypes: BarcodeType[] = ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'];
 
+function formatDebugValue(value: boolean | string | null | undefined) {
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false';
+  }
+
+  if (value === null) {
+    return 'null';
+  }
+
+  if (typeof value === 'undefined') {
+    return 'undefined';
+  }
+
+  return String(value);
+}
+
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <ScrollView className="flex-1 bg-parchment" contentContainerStyle={{ padding: 24, gap: 24 }}>
+      <View className="gap-4 rounded-[28px] border border-red-300 bg-red-50 p-6">
+        <Text className="text-3xl text-red-900" style={{ fontFamily: 'Georgia' }}>
+          Scan page crashed
+        </Text>
+        <Text className="text-base leading-7 text-red-900">
+          Instead of a majestic blank white void, here is the actual error. Tiny progress. You can still use manual ISBN lookup after we fix this.
+        </Text>
+        <Text className="rounded-[20px] bg-white px-4 py-3 font-mono text-sm text-red-900">{error.message}</Text>
+        <View className="gap-3 md:flex-row">
+          <Button label="Try again" onPress={retry} />
+        </View>
+      </View>
+    </ScrollView>
+  );
+}
+
 export default function ScanScreen() {
   const router = useRouter();
   const { user, loading } = useAuth();
@@ -34,6 +69,7 @@ export default function ScanScreen() {
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraAvailable, setCameraAvailable] = useState<boolean | null>(null);
   const [cameraError, setCameraError] = useState('');
+  const [cameraDebug, setCameraDebug] = useState('initializing');
   const [lookupMessage, setLookupMessage] = useState('');
   const [lookupError, setLookupError] = useState('');
   const [lookupPending, setLookupPending] = useState(false);
@@ -53,18 +89,37 @@ export default function ScanScreen() {
   useEffect(() => {
     let active = true;
 
-    CameraView.isAvailableAsync()
-      .then((available) => {
+    async function detectCameraAvailability() {
+      try {
+        const isAvailableAsync = (CameraView as typeof CameraView & { isAvailableAsync?: () => Promise<boolean> }).isAvailableAsync;
+
+        if (typeof isAvailableAsync !== 'function') {
+          if (active) {
+            setCameraAvailable(false);
+            setCameraDebug('CameraView.isAvailableAsync is not available in this runtime');
+            setCameraError('This browser build is not exposing a usable camera API here. Manual ISBN lookup still works below.');
+          }
+          return;
+        }
+
+        const available = await isAvailableAsync();
         if (active) {
           setCameraAvailable(available);
+          setCameraDebug(`Camera availability check resolved: ${available ? 'true' : 'false'}`);
+          if (!available) {
+            setCameraError('This device or browser is not exposing a usable camera. Manual ISBN lookup still works below.');
+          }
         }
-      })
-      .catch(() => {
+      } catch (error) {
         if (active) {
           setCameraAvailable(false);
+          setCameraDebug(error instanceof Error ? error.message : 'Unknown camera availability error');
           setCameraError('This device or browser is not exposing a usable camera. Manual ISBN lookup still works below.');
         }
-      });
+      }
+    }
+
+    void detectCameraAvailability();
 
     return () => {
       active = false;
@@ -89,7 +144,9 @@ export default function ScanScreen() {
     }
 
     try {
+      setCameraDebug('Requesting camera permission');
       const result = await requestPermission();
+      setCameraDebug(`Permission request resolved: granted=${result.granted ? 'true' : 'false'}`);
       if (!result.granted) {
         setCameraEnabled(false);
         setCameraError('Camera permission was denied. You can still paste an ISBN and lookup the book manually.');
@@ -228,6 +285,7 @@ export default function ScanScreen() {
                 facing="back"
                 onMountError={(event) => {
                   setCameraEnabled(false);
+                  setCameraDebug(event.message || 'CameraView mount error');
                   setCameraError(event.message || 'The camera failed to start here.');
                 }}
                 onBarcodeScanned={cameraEnabled ? handleBarcodeScanned : undefined}
@@ -246,6 +304,16 @@ export default function ScanScreen() {
             <Button label={lastScannedIsbn ? 'Scan another book' : 'Open scanner'} variant="secondary" onPress={() => void enableCamera()} />
           </View>
         ) : null}
+
+        <View className="rounded-[20px] border border-line bg-[#F8F3EA] p-4">
+          <Text className="text-xs uppercase tracking-[2px] text-mist">Debug</Text>
+          <Text className="mt-2 text-sm leading-6 text-ink">platform: {Platform.OS}</Text>
+          <Text className="text-sm leading-6 text-ink">permission: {permissionState}</Text>
+          <Text className="text-sm leading-6 text-ink">cameraEnabled: {formatDebugValue(cameraEnabled)}</Text>
+          <Text className="text-sm leading-6 text-ink">cameraAvailable: {formatDebugValue(cameraAvailable)}</Text>
+          <Text className="text-sm leading-6 text-ink">lookupPending: {formatDebugValue(lookupPending)}</Text>
+          <Text className="text-sm leading-6 text-ink">cameraDebug: {cameraDebug}</Text>
+        </View>
 
         {lastScannedIsbn ? <Text className="text-sm text-mist">Last scanned ISBN: {lastScannedIsbn}</Text> : null}
         {cameraError ? <Text className="text-sm text-red-700">{cameraError}</Text> : null}
