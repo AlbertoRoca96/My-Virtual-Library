@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 
 type ProfileHeroProps = {
   title: string;
+  handle: string;
   subtitle: string;
   bio: string;
   actions: ReactNode;
@@ -14,7 +15,7 @@ const profileHighlights = [
   'Built for quiet collecting and dramatic TBR piles',
 ];
 
-export function ProfileHero({ actions, bio, subtitle, title }: ProfileHeroProps) {
+export function ProfileHero({ actions, bio, handle, subtitle, title }: ProfileHeroProps) {
   return (
     <View className="gap-6 rounded-[38px] border border-line bg-paper px-6 py-7 md:flex-row md:items-center md:justify-between">
       <View className="flex-1 gap-6 md:max-w-[42%]">
@@ -45,7 +46,7 @@ export function ProfileHero({ actions, bio, subtitle, title }: ProfileHeroProps)
 
       <View className="flex-1 gap-6 md:max-w-[52%]">
         <View className="gap-3">
-          <Text className="text-xs uppercase tracking-[2.5px] text-mist">My virtual bookshelf</Text>
+          <Text className="text-xs uppercase tracking-[2.5px] text-mist">{handle}</Text>
           <Text className="text-5xl leading-[62px] text-ink md:text-6xl md:leading-[78px]" style={{ fontFamily: 'Georgia' }}>
             {title}
           </Text>
@@ -65,6 +66,17 @@ export function ProfileHero({ actions, bio, subtitle, title }: ProfileHeroProps)
           <Text className="mt-3 text-base leading-8 text-ink">
             A dreamy catalogue space for collecting editions, curating little moodboard moments, and pretending every stack of books is an intentional still life instead of a cry for help.
           </Text>
+          <View className="mt-4 flex-row flex-wrap gap-2">
+            <View className="rounded-full border border-line bg-paper px-3 py-2">
+              <Text className="text-xs text-ink">Book blogger energy</Text>
+            </View>
+            <View className="rounded-full border border-line bg-paper px-3 py-2">
+              <Text className="text-xs text-ink">Pinned post main character</Text>
+            </View>
+            <View className="rounded-full border border-line bg-paper px-3 py-2">
+              <Text className="text-xs text-ink">Ask box enabled</Text>
+            </View>
+          </View>
         </View>
 
         <View className="gap-3">{actions}</View>
