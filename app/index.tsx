@@ -1,7 +1,13 @@
+import { useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { ScrollView, Text, View } from 'react-native';
 
 import { BookCard } from '@/components/book/book-card';
+import { JournalGrid } from '@/components/landing/journal-grid';
+import { MoodboardCollage } from '@/components/landing/moodboard-collage';
+import { ProfileHero } from '@/components/landing/profile-hero';
+import { ShelfStats } from '@/components/landing/shelf-stats';
+import { TopBar } from '@/components/landing/top-bar';
 import { Section } from '@/components/layout/section';
 import { Button } from '@/components/ui/button';
 import { AuthCard } from '@/features/auth/auth-card';
@@ -11,38 +17,77 @@ import { useAuth } from '@/lib/auth';
 import { hasSupabaseEnv } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
 
+function formatStatusLabel(statuses: string[]) {
+  if (statuses.includes('reading')) {
+    return 'Reading';
+  }
+  if (statuses.includes('wishlist')) {
+    return 'Wishlist';
+  }
+  if (statuses.includes('owned')) {
+    return 'Owned';
+  }
+  return 'Curating';
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const booksQuery = useBooks();
-  const previewBooks = user ? (booksQuery.data ?? []).slice(0, 3) : mockBooks;
+  const previewBooks = user ? (booksQuery.data ?? []).slice(0, 4) : mockBooks;
+
+  const derivedStats = useMemo(() => {
+    const liveBooks = booksQuery.data ?? [];
+    const sourceBooks = user ? liveBooks : mockBooks;
+    const genreNames = sourceBooks.flatMap((book) =>
+      book.genres.map((genre) => (typeof genre === 'string' ? genre : genre.name))
+    );
+    const statuses = sourceBooks.map((book) => ('readingStatus' in book ? book.readingStatus : book.status.toLowerCase()));
+
+    return {
+      bookCount: sourceBooks.length,
+      genreCount: new Set(genreNames).size,
+      moodboardCount: 3,
+      statusLabel: formatStatusLabel(statuses),
+    };
+  }, [booksQuery.data, user]);
+
+  const heroActions = (
+    <>
+      <Button label="Browse library" onPress={() => router.push('/library')} />
+      <View className="flex-row flex-wrap gap-3">
+        <View className="min-w-[180px] flex-1">
+          <Button label="Add book" variant="secondary" onPress={() => router.push('/add-book')} />
+        </View>
+        <View className="min-w-[180px] flex-1">
+          <Button label="Scan ISBN" variant="secondary" onPress={() => router.push('/scan')} />
+        </View>
+        {user ? (
+          <View className="min-w-[180px] flex-1">
+            <Button label="Sign out" variant="secondary" onPress={() => void supabase.auth.signOut()} />
+          </View>
+        ) : null}
+      </View>
+    </>
+  );
 
   return (
-    <ScrollView className="flex-1 bg-parchment" contentContainerStyle={{ padding: 24, gap: 32 }}>
-      <View className="items-center gap-5 rounded-[32px] bg-paper px-6 py-10">
-        <View className="h-28 w-28 items-center justify-center rounded-[28px] border border-line bg-parchment" />
-        <View className="items-center gap-3">
-          <Text className="text-center text-5xl text-ink" style={{ fontFamily: 'Georgia' }}>
-            My Virtual Library
-          </Text>
-          <Text className="max-w-xl text-center text-base leading-7 text-mist">
-            A cozy cross-platform catalogue for keeping track of your books, scanning ISBNs on your phone,
-            and curating a bookshelf that feels more like you than a spreadsheet ever could.
-          </Text>
-        </View>
-        <View className="w-full max-w-md gap-3">
-          <Button label="Browse library" onPress={() => router.push('/library')} />
-          <View className="flex-row gap-3">
-            <View className="flex-1">
-              <Button label="Add book" variant="secondary" onPress={() => router.push('/add-book')} />
-            </View>
-            <View className="flex-1">
-              <Button label="Scan ISBN" variant="secondary" onPress={() => router.push('/scan')} />
-            </View>
-          </View>
-          {user ? <Button label="Sign out" variant="secondary" onPress={() => void supabase.auth.signOut()} /> : null}
-        </View>
-      </View>
+    <ScrollView className="flex-1 bg-parchment" contentContainerStyle={{ padding: 24, gap: 28 }}>
+      <TopBar shelfName="myvirtualbookshelf" />
+
+      <ProfileHero
+        title="My Virtual Bookshelf"
+        subtitle="A soft little corner for beautifully bound chaos, private shelf rituals, and suspiciously romantic metadata."
+        bio="This is where the catalogue wants to feel like a profile, the profile wants to feel like a scrapbook, and every book gets to live in a space that is warmer than a spreadsheet and slightly more dramatic than necessary."
+        actions={heroActions}
+      />
+
+      <ShelfStats
+        bookCount={derivedStats.bookCount}
+        genreCount={derivedStats.genreCount}
+        moodboardCount={derivedStats.moodboardCount}
+        statusLabel={derivedStats.statusLabel}
+      />
 
       {!hasSupabaseEnv ? (
         <View className="rounded-[28px] border border-red-300 bg-red-50 p-5">
@@ -53,32 +98,22 @@ export default function HomeScreen() {
       {!user && !loading ? <AuthCard /> : null}
 
       <Section
-        eyebrow="Tech direction"
-        title={user ? 'Your shelf is now live-backed' : 'Built for web and mobile from one codebase'}
-        description={
-          user
-            ? 'Once the SQL is pasted into Supabase, your library view and add-book flow will use real auth and database calls.'
-            : 'Expo + React Native Web + Supabase gives us a sane foundation instead of two separate apps that eventually start fighting in the parking lot.'
-        }
+        eyebrow="Visual shelf"
+        title="Artwork-first, collage-forward, and delightfully bookish"
+        description="This is the beginning of the actual vibe pass: profile identity first, then little visual pockets that feel more like a literary diary than a CRUD dashboard."
       >
-        <View className="gap-3 rounded-[28px] border border-line bg-paper p-5">
-          <Text className="text-base leading-7 text-ink">- Cross-platform UI with Expo Router</Text>
-          <Text className="text-base leading-7 text-ink">- Supabase auth wired for email/password and magic links</Text>
-          <Text className="text-base leading-7 text-ink">- Real book create/list/delete hooks ready for RLS-backed tables</Text>
-          <Text className="text-base leading-7 text-ink">- ISBN scan screen reserved for Open Library autofill next</Text>
-          <Text className="text-base leading-7 text-ink">- Supabase env configured: {hasSupabaseEnv ? 'yes' : 'not yet'}</Text>
-        </View>
+        <MoodboardCollage />
       </Section>
 
       <Section
-        eyebrow="Shelf preview"
-        title={user ? 'Recent books from your account' : 'A softer, more literary vibe'}
+        eyebrow="Featured titles"
+        title={user ? 'Books from your shelf' : 'A preview of the shelf language'}
         description={
           user
             ? booksQuery.isLoading
-              ? 'Loading from Supabase now.'
-              : 'The cards below come from the real books query when you are signed in.'
-            : 'This starter UI leans warm, airy, and bookish so we are not launching into a blank white rectangle of sadness.'
+              ? 'Your real catalogue is loading now.'
+              : 'These cards are now pulled from your account and styled to feel like display objects, not list rows.'
+            : 'Until you sign in, the homepage uses curated sample books to show the intended tone of the shelf.'
         }
       >
         <View className="flex-row flex-wrap justify-center gap-4">
@@ -94,6 +129,14 @@ export default function HomeScreen() {
             />
           ))}
         </View>
+      </Section>
+
+      <Section
+        eyebrow="Shelf journal"
+        title="The page should read like a personality, not an admin panel"
+        description="So the landing experience now has visual rhythm, layered sections, and little editorial notes instead of throwing every interaction into one flat rectangle and calling it taste."
+      >
+        <JournalGrid />
       </Section>
     </ScrollView>
   );

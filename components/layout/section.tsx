@@ -10,13 +10,13 @@ type SectionProps = {
 
 export function Section({ eyebrow, title, description, children }: SectionProps) {
   return (
-    <View className="gap-4">
-      <View className="gap-2">
+    <View className="gap-5">
+      <View className="gap-3">
         {eyebrow ? <Text className="text-xs uppercase tracking-[2px] text-mist">{eyebrow}</Text> : null}
-        <Text className="text-3xl text-ink" style={{ fontFamily: 'Georgia' }}>
+        <Text className="text-4xl leading-[52px] text-ink" style={{ fontFamily: 'Georgia' }}>
           {title}
         </Text>
-        {description ? <Text className="text-base leading-6 text-mist">{description}</Text> : null}
+        {description ? <Text className="max-w-4xl text-base leading-7 text-mist">{description}</Text> : null}
       </View>
       {children}
     </View>

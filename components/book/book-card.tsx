@@ -16,14 +16,14 @@ function getGenreName(genre: string | { name: string }) {
 
 export function BookCard({ author, coverTone = '#B8A06A', genres, onDelete, publisher, status, title }: BookCardProps) {
   return (
-    <View className="w-full max-w-[220px] gap-3 rounded-[28px] border border-line bg-paper p-4 shadow-card">
-      <View className="h-52 rounded-[22px]" style={{ backgroundColor: coverTone }} />
+    <View className="w-full max-w-[240px] gap-4 rounded-[30px] border border-line bg-paper p-4 shadow-card">
+      <View className="h-60 rounded-[24px] border border-[#7B6C5B]/15" style={{ backgroundColor: coverTone }} />
       <View className="gap-2">
         <Text className="text-xl text-ink" numberOfLines={2} style={{ fontFamily: 'Georgia' }}>
           {title}
         </Text>
-        <Text className="text-sm text-mist">{author}</Text>
-        <Text className="text-xs uppercase tracking-[1.5px] text-accent">{status}</Text>
+        <Text className="text-base text-mist">{author}</Text>
+        <Text className="text-xs uppercase tracking-[2px] text-accent">{status}</Text>
         {publisher ? <Text className="text-xs text-mist">{publisher}</Text> : null}
         <View className="flex-row flex-wrap gap-2">
           {genres.map((genre) => {
