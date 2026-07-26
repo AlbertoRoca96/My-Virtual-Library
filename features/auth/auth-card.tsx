@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
+import { getAuthRedirectUrl } from '@/lib/auth-redirect';
 import { supabase } from '@/lib/supabase';
 
 const authSchema = z.object({
@@ -31,7 +32,13 @@ export function AuthCard() {
 
   const signUp = useMutation({
     mutationFn: async ({ email, password }: AuthFormValues) => {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: getAuthRedirectUrl(),
+        },
+      });
       if (error) throw error;
     },
     onSuccess: () => Alert.alert('Account created', 'Check your email for confirmation if Supabase email confirmation is enabled.'),
@@ -54,7 +61,12 @@ export function AuthCard() {
         throw new Error('Enter a valid email before requesting a magic link.');
       }
 
-      const { error } = await supabase.auth.signInWithOtp({ email });
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: getAuthRedirectUrl(),
+        },
+      });
       if (error) throw error;
     },
     onSuccess: () => Alert.alert('Magic link sent', 'Check your email for the sign-in link.'),
