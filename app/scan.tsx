@@ -25,6 +25,7 @@ const defaultValues: BookFormValues = {
 };
 
 const barcodeTypes: BarcodeType[] = ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'];
+const canAttemptCameraOnThisPlatform = Platform.OS === 'web';
 
 function formatDebugValue(value: boolean | string | null | undefined) {
   if (typeof value === 'boolean') {
@@ -95,9 +96,8 @@ export default function ScanScreen() {
 
         if (typeof isAvailableAsync !== 'function') {
           if (active) {
-            setCameraAvailable(false);
-            setCameraDebug('CameraView.isAvailableAsync is not available in this runtime');
-            setCameraError('This browser build is not exposing a usable camera API here. Manual ISBN lookup still works below.');
+            setCameraAvailable(null);
+            setCameraDebug('CameraView.isAvailableAsync is not available in this runtime; allowing direct mount attempt');
           }
           return;
         }
@@ -112,9 +112,11 @@ export default function ScanScreen() {
         }
       } catch (error) {
         if (active) {
-          setCameraAvailable(false);
+          setCameraAvailable(canAttemptCameraOnThisPlatform ? null : false);
           setCameraDebug(error instanceof Error ? error.message : 'Unknown camera availability error');
-          setCameraError('This device or browser is not exposing a usable camera. Manual ISBN lookup still works below.');
+          if (!canAttemptCameraOnThisPlatform) {
+            setCameraError('This device or browser is not exposing a usable camera. Manual ISBN lookup still works below.');
+          }
         }
       }
     }
@@ -138,7 +140,7 @@ export default function ScanScreen() {
     setLookupMessage('');
     scanInFlightRef.current = false;
 
-    if (cameraAvailable === false) {
+    if (cameraAvailable === false && !canAttemptCameraOnThisPlatform) {
       setCameraError('No camera is available here. Use manual ISBN lookup below instead.');
       return;
     }
@@ -154,6 +156,7 @@ export default function ScanScreen() {
       }
 
       setCameraEnabled(true);
+      setCameraDebug('Permission granted; attempting to mount scanner');
     } catch (error) {
       setCameraEnabled(false);
       setCameraError(error instanceof Error ? error.message : 'Could not request camera permission.');
@@ -274,7 +277,7 @@ export default function ScanScreen() {
           </View>
         ) : null}
 
-        {cameraEnabled && permissionState === 'granted' && cameraAvailable !== false ? (
+        {cameraEnabled && permissionState === 'granted' && (cameraAvailable !== false || canAttemptCameraOnThisPlatform) ? (
           <View className="gap-4">
             <Text className="text-sm leading-6 text-mist">
               Point the camera at the barcode on the back of the book. We pause the scanner after one hit so it does not machine-gun the same ISBN five times like an overexcited pigeon.
@@ -299,7 +302,7 @@ export default function ScanScreen() {
           </View>
         ) : null}
 
-        {!cameraEnabled && permissionState === 'granted' && cameraAvailable !== false ? (
+        {!cameraEnabled && permissionState === 'granted' && (cameraAvailable !== false || canAttemptCameraOnThisPlatform) ? (
           <View className="flex-row flex-wrap gap-3">
             <Button label={lastScannedIsbn ? 'Scan another book' : 'Open scanner'} variant="secondary" onPress={() => void enableCamera()} />
           </View>
