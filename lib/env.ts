@@ -1,8 +1,18 @@
+import Constants from 'expo-constants';
+
+const extra = (Constants.expoConfig?.extra || {}) as {
+  supabaseUrl?: string;
+  supabasePublishableKey?: string;
+};
+
 const supabasePublishableKey =
-  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+  extra.supabasePublishableKey ??
+  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
+  '';
 
 export const env = {
-  supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
+  supabaseUrl: extra.supabaseUrl ?? process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
   supabasePublishableKey,
 };
 
