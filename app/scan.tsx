@@ -2,9 +2,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CameraView, BarcodeScanningResult, BarcodeType, scanFromURLAsync, useCameraPermissions } from 'expo-camera';
 import { ErrorBoundaryProps, useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
-import { Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Platform, ScrollView, Text, View } from 'react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { AndroidWebLiveIsbnScanner } from '@/components/book/android-web-live-isbn-scanner';
 import { Button } from '@/components/ui/button';
 import { AuthCard } from '@/features/auth/auth-card';
 import { BookFormFields } from '@/features/books/book-form-fields';
@@ -372,17 +373,29 @@ export default function ScanScreen() {
 
       <View className="gap-4 rounded-[28px] border border-line bg-paper p-5">
         {isAndroidWeb ? (
-          <View className="gap-3 rounded-[24px] border border-dashed border-accent bg-[#EADFCF] p-5">
-            <Text className="text-lg text-ink" style={{ fontFamily: 'Georgia' }}>
-              Use your phone camera
-            </Text>
-            <Text className="text-base leading-7 text-mist">
-              On Android web we now use the device camera capture flow first, because it autofocuses better than the live embedded preview. Take a photo of the barcode, we will detect the ISBN, autofill the form, and bring you right back here to edit anything before saving.
-            </Text>
-            <Button
-              label={lastScannedIsbn ? 'Take another barcode photo' : 'Open camera to scan ISBN'}
-              onPress={() => void scanBarcodePhotoFromDevice()}
-            />
+          <View className="gap-4 rounded-[24px] border border-dashed border-accent bg-[#EADFCF] p-5">
+            {!cameraEnabled ? (
+              <>
+                <Text className="text-lg text-ink" style={{ fontFamily: 'Georgia' }}>
+                  Live Android scan
+                </Text>
+                <Text className="text-base leading-7 text-mist">
+                  On Pixel/Android web we now try a direct live camera stream first. As soon as the first valid ISBN is recognized, we autofill the form and keep you here to edit before saving. If the browser still behaves like a melted spoon, the photo fallback is below.
+                </Text>
+                <View className="flex-row flex-wrap gap-3">
+                  <Button label="Start live scanner" onPress={() => void enableCamera()} />
+                  <Button label="Use photo fallback" variant="secondary" onPress={() => void scanBarcodePhotoFromDevice()} />
+                </View>
+              </>
+            ) : (
+              <AndroidWebLiveIsbnScanner
+                active={cameraEnabled}
+                onDebug={setCameraDebug}
+                onDetected={(rawValue) => {
+                  handleBarcodeScanned({ type: 'ean13', data: rawValue, cornerPoints: [], bounds: { origin: { x: 0, y: 0 }, size: { width: 0, height: 0 } } });
+                }}
+              />
+            )}
           </View>
         ) : !cameraEnabled && !nativeScannerActive ? (
           <View className="gap-3 rounded-[24px] border border-dashed border-accent bg-[#EADFCF] p-5">
@@ -507,7 +520,7 @@ export default function ScanScreen() {
 
         {isAndroidWeb ? (
           <Text className="text-sm text-mist">
-            Android web scan mode: native camera photo -> ISBN detection -> autofill -> manual review.
+            Android web scan mode: live detection first, photo fallback second, then autofill + manual review.
           </Text>
         ) : null}
         {lastScannedIsbn ? <Text className="text-sm text-mist">Last scanned ISBN: {lastScannedIsbn}</Text> : null}
