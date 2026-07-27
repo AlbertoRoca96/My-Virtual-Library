@@ -26,6 +26,7 @@ const defaultValues: BookFormValues = {
 
 const barcodeTypes: BarcodeType[] = ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'];
 const canAttemptCameraOnThisPlatform = Platform.OS === 'web';
+const prefersNativeScanner = Platform.OS !== 'web' && CameraView.isModernBarcodeScannerAvailable;
 const zoomPresets = [
   { label: '1x', value: 0 },
   { label: '1.5x', value: 0.15 },
@@ -77,6 +78,7 @@ export default function ScanScreen() {
   const [cameraError, setCameraError] = useState('');
   const [cameraDebug, setCameraDebug] = useState('initializing');
   const [previewReady, setPreviewReady] = useState(false);
+  const [nativeScannerActive, setNativeScannerActive] = useState(false);
   const [lookupMessage, setLookupMessage] = useState('');
   const [lookupError, setLookupError] = useState('');
   const [lookupPending, setLookupPending] = useState(false);
@@ -94,6 +96,32 @@ export default function ScanScreen() {
     resolver: zodResolver(bookFormSchema),
     defaultValues,
   });
+
+  useEffect(() => {
+    if (!prefersNativeScanner) {
+      return;
+    }
+
+    const subscription = CameraView.onModernBarcodeScanned((result) => {
+      const isbn = sanitizeIsbn(result.data);
+      setNativeScannerActive(false);
+      if (!isValidIsbnLength(isbn)) {
+        setLookupMessage('');
+        setLookupError('Scanned code was not a usable ISBN. Try again, or type it manually.');
+        return;
+      }
+
+      setLastScannedIsbn(isbn);
+      setLookupError('');
+      setLookupMessage(`Scanned ${isbn}. Looking up book data...`);
+      void hydrateFromIsbn(isbn);
+    });
+
+    return () => {
+      subscription.remove();
+      void CameraView.dismissScanner().catch(() => undefined);
+    };
+  }, [prefersNativeScanner]);
 
   useEffect(() => {
     let active = true;
@@ -142,6 +170,22 @@ export default function ScanScreen() {
     return 'denied';
   }, [permission]);
 
+  async function openNativeScanner() {
+    setLookupError('');
+    setLookupMessage('Opening device scanner...');
+    setNativeScannerActive(true);
+    setCameraDebug('Launching native barcode scanner');
+
+    try {
+      await CameraView.launchScanner({ barcodeTypes });
+      setCameraDebug('Native barcode scanner launched');
+    } catch (error) {
+      setNativeScannerActive(false);
+      setLookupMessage('');
+      setCameraError(error instanceof Error ? error.message : 'Could not open the device barcode scanner.');
+    }
+  }
+
   async function enableCamera() {
     setCameraError('');
     setLookupError('');
@@ -162,6 +206,11 @@ export default function ScanScreen() {
       if (!result.granted) {
         setCameraEnabled(false);
         setCameraError('Camera permission was denied. You can still paste an ISBN and lookup the book manually.');
+        return;
+      }
+
+      if (prefersNativeScanner) {
+        await openNativeScanner();
         return;
       }
 
@@ -275,19 +324,35 @@ export default function ScanScreen() {
       </View>
 
       <View className="gap-4 rounded-[28px] border border-line bg-paper p-5">
-        {!cameraEnabled ? (
+        {!cameraEnabled && !nativeScannerActive ? (
           <View className="gap-3 rounded-[24px] border border-dashed border-accent bg-[#EADFCF] p-5">
             <Text className="text-lg text-ink" style={{ fontFamily: 'Georgia' }}>
               Camera access needed
             </Text>
             <Text className="text-base leading-7 text-mist">
-              Allow camera access to scan on Android or web. If that does not work on this device, manual ISBN lookup below will still do the job.
+              {prefersNativeScanner
+                ? 'On this device we can use the native barcode scanner instead of the embedded camera box, which should behave a lot less like a drunk potato.'
+                : 'Allow camera access to scan on Android or web. If that does not work on this device, manual ISBN lookup below will still do the job.'}
             </Text>
-            <Button label="Allow camera" onPress={() => void enableCamera()} />
+            <Button label={prefersNativeScanner ? 'Open device scanner' : 'Allow camera'} onPress={() => void enableCamera()} />
           </View>
         ) : null}
 
-        {cameraEnabled && permissionState === 'granted' && (cameraAvailable !== false || canAttemptCameraOnThisPlatform) ? (
+        {nativeScannerActive ? (
+          <View className="gap-3 rounded-[24px] border border-line bg-parchment p-5">
+            <Text className="text-lg text-ink" style={{ fontFamily: 'Georgia' }}>
+              Native scanner open
+            </Text>
+            <Text className="text-base leading-7 text-mist">
+              Use the device barcode scanner UI to scan the ISBN. If it closes without a result, tap the button below to reopen it or type the ISBN manually.
+            </Text>
+            <View className="flex-row flex-wrap gap-3">
+              <Button label="Reopen scanner" variant="secondary" onPress={() => void openNativeScanner()} />
+            </View>
+          </View>
+        ) : null}
+
+        {cameraEnabled && !prefersNativeScanner && permissionState === 'granted' && (cameraAvailable !== false || canAttemptCameraOnThisPlatform) ? (
           <View className="gap-4">
             <Text className="text-sm leading-6 text-mist">
               Point the camera at the barcode on the back of the book and keep the lines inside the guide frame. Move a little farther back than feels natural, let autofocus settle, and use 1.5x or 2x zoom if the barcode is tiny.
@@ -360,7 +425,7 @@ export default function ScanScreen() {
           </View>
         ) : null}
 
-        {!cameraEnabled && permissionState === 'granted' && (cameraAvailable !== false || canAttemptCameraOnThisPlatform) ? (
+        {!cameraEnabled && !prefersNativeScanner && permissionState === 'granted' && (cameraAvailable !== false || canAttemptCameraOnThisPlatform) ? (
           <View className="flex-row flex-wrap gap-3">
             <Button label={lastScannedIsbn ? 'Scan another book' : 'Open scanner'} variant="secondary" onPress={() => void enableCamera()} />
           </View>
@@ -374,6 +439,8 @@ export default function ScanScreen() {
           <Text className="text-sm leading-6 text-ink">cameraAvailable: {formatDebugValue(cameraAvailable)}</Text>
           <Text className="text-sm leading-6 text-ink">lookupPending: {formatDebugValue(lookupPending)}</Text>
           <Text className="text-sm leading-6 text-ink">previewReady: {formatDebugValue(previewReady)}</Text>
+          <Text className="text-sm leading-6 text-ink">nativeScannerActive: {formatDebugValue(nativeScannerActive)}</Text>
+          <Text className="text-sm leading-6 text-ink">prefersNativeScanner: {formatDebugValue(prefersNativeScanner)}</Text>
           <Text className="text-sm leading-6 text-ink">zoom: {zoom}</Text>
           <Text className="text-sm leading-6 text-ink">torchEnabled: {formatDebugValue(torchEnabled)}</Text>
           <Text className="text-sm leading-6 text-ink">cameraDebug: {cameraDebug}</Text>
