@@ -371,7 +371,20 @@ export default function ScanScreen() {
       </View>
 
       <View className="gap-4 rounded-[28px] border border-line bg-paper p-5">
-        {!cameraEnabled && !nativeScannerActive ? (
+        {isAndroidWeb ? (
+          <View className="gap-3 rounded-[24px] border border-dashed border-accent bg-[#EADFCF] p-5">
+            <Text className="text-lg text-ink" style={{ fontFamily: 'Georgia' }}>
+              Use your phone camera
+            </Text>
+            <Text className="text-base leading-7 text-mist">
+              On Android web we now use the device camera capture flow first, because it autofocuses better than the live embedded preview. Take a photo of the barcode, we will detect the ISBN, autofill the form, and bring you right back here to edit anything before saving.
+            </Text>
+            <Button
+              label={lastScannedIsbn ? 'Take another barcode photo' : 'Open camera to scan ISBN'}
+              onPress={() => void scanBarcodePhotoFromDevice()}
+            />
+          </View>
+        ) : !cameraEnabled && !nativeScannerActive ? (
           <View className="gap-3 rounded-[24px] border border-dashed border-accent bg-[#EADFCF] p-5">
             <Text className="text-lg text-ink" style={{ fontFamily: 'Georgia' }}>
               Camera access needed
@@ -399,7 +412,7 @@ export default function ScanScreen() {
           </View>
         ) : null}
 
-        {cameraEnabled && !prefersNativeScanner && permissionState === 'granted' && (cameraAvailable !== false || canAttemptCameraOnThisPlatform) ? (
+        {cameraEnabled && !isAndroidWeb && !prefersNativeScanner && permissionState === 'granted' && (cameraAvailable !== false || canAttemptCameraOnThisPlatform) ? (
           <View className="gap-4">
             <Text className="text-sm leading-6 text-mist">
               Point the camera at the barcode on the back of the book and keep the lines inside the guide frame. On Android web, start at 1x first. If the live preview stays blurry, use the photo fallback below so the phone can autofocus a still image properly.
@@ -470,7 +483,7 @@ export default function ScanScreen() {
           </View>
         ) : null}
 
-        {!cameraEnabled && !prefersNativeScanner && permissionState === 'granted' && (cameraAvailable !== false || canAttemptCameraOnThisPlatform) ? (
+        {!cameraEnabled && !isAndroidWeb && !prefersNativeScanner && permissionState === 'granted' && (cameraAvailable !== false || canAttemptCameraOnThisPlatform) ? (
           <View className="flex-row flex-wrap gap-3">
             <Button label={lastScannedIsbn ? 'Scan another book' : 'Open scanner'} variant="secondary" onPress={() => void enableCamera()} />
           </View>
@@ -492,6 +505,11 @@ export default function ScanScreen() {
           <Text className="text-sm leading-6 text-ink">cameraDebug: {cameraDebug}</Text>
         </View>
 
+        {isAndroidWeb ? (
+          <Text className="text-sm text-mist">
+            Android web scan mode: native camera photo -> ISBN detection -> autofill -> manual review.
+          </Text>
+        ) : null}
         {lastScannedIsbn ? <Text className="text-sm text-mist">Last scanned ISBN: {lastScannedIsbn}</Text> : null}
         {cameraError ? <Text className="text-sm text-red-700">{cameraError}</Text> : null}
         {lookupMessage ? <Text className="text-sm text-accent">{lookupMessage}</Text> : null}
