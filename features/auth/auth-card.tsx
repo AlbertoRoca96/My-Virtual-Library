@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { getAuthRedirectUrl } from '@/lib/auth-redirect';
+import { hasSupabaseEnv } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
 
 const authSchema = z.object({
@@ -17,6 +18,8 @@ const authSchema = z.object({
 type AuthFormValues = z.infer<typeof authSchema>;
 
 export function AuthCard() {
+  const envMissingMessage =
+    'This build is missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Set them in EAS so the Android app can talk to your real Supabase project instead of the placeholder host.';
   const {
     control,
     handleSubmit,
@@ -32,6 +35,10 @@ export function AuthCard() {
 
   const signUp = useMutation({
     mutationFn: async ({ email, password }: AuthFormValues) => {
+      if (!hasSupabaseEnv) {
+        throw new Error(envMissingMessage);
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -47,6 +54,10 @@ export function AuthCard() {
 
   const signIn = useMutation({
     mutationFn: async ({ email, password }: AuthFormValues) => {
+      if (!hasSupabaseEnv) {
+        throw new Error(envMissingMessage);
+      }
+
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
     },
@@ -55,6 +66,10 @@ export function AuthCard() {
 
   const magicLink = useMutation({
     mutationFn: async () => {
+      if (!hasSupabaseEnv) {
+        throw new Error(envMissingMessage);
+      }
+
       const email = getValues('email');
       const emailResult = z.string().email().safeParse(email);
       if (!emailResult.success) {
@@ -85,6 +100,12 @@ export function AuthCard() {
           Email/password and magic link are both wired. Because why choose one sensible path when we can support two without being disgusting about it?
         </Text>
       </View>
+
+      {!hasSupabaseEnv ? (
+        <View className="rounded-[24px] border border-red-300 bg-red-50 p-4">
+          <Text className="text-sm leading-6 text-red-900">{envMissingMessage}</Text>
+        </View>
+      ) : null}
 
       <Controller
         control={control}
@@ -118,9 +139,9 @@ export function AuthCard() {
       />
 
       <View className="gap-3">
-        <Button label={signIn.isPending ? 'Signing in...' : 'Sign in'} onPress={handleSubmit((values) => signIn.mutate(values))} disabled={busy} />
-        <Button label={signUp.isPending ? 'Creating account...' : 'Create account'} variant="secondary" onPress={handleSubmit((values) => signUp.mutate(values))} disabled={busy} />
-        <Button label={magicLink.isPending ? 'Sending magic link...' : 'Send magic link'} variant="secondary" onPress={() => magicLink.mutate()} disabled={busy} />
+        <Button label={signIn.isPending ? 'Signing in...' : 'Sign in'} onPress={handleSubmit((values) => signIn.mutate(values))} disabled={busy || !hasSupabaseEnv} />
+        <Button label={signUp.isPending ? 'Creating account...' : 'Create account'} variant="secondary" onPress={handleSubmit((values) => signUp.mutate(values))} disabled={busy || !hasSupabaseEnv} />
+        <Button label={magicLink.isPending ? 'Sending magic link...' : 'Send magic link'} variant="secondary" onPress={() => magicLink.mutate()} disabled={busy || !hasSupabaseEnv} />
       </View>
     </View>
   );

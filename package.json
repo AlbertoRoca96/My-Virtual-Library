@@ -11,8 +11,8 @@
     "typecheck": "tsc --noEmit",
     "export:web": "expo export --platform web",
     "prepare:gh-pages": "node scripts/prepare-gh-pages.mjs",
-    "build:android:preview": "eas build -p android --profile preview",
-    "build:android:production": "eas build -p android --profile production"
+    "build:android:preview": "npx eas build -p android --profile preview",
+    "build:android:production": "npx eas build -p android --profile production"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",
