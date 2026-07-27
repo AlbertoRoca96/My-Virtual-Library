@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CameraView, BarcodeScanningResult, BarcodeType, useCameraPermissions } from 'expo-camera';
+import { CameraView, BarcodeScanningResult, BarcodeType, scanFromURLAsync, useCameraPermissions } from 'expo-camera';
 import { ErrorBoundaryProps, useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
@@ -27,6 +27,7 @@ const defaultValues: BookFormValues = {
 const barcodeTypes: BarcodeType[] = ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'];
 const canAttemptCameraOnThisPlatform = Platform.OS === 'web';
 const prefersNativeScanner = Platform.OS !== 'web' && CameraView.isModernBarcodeScannerAvailable;
+const isAndroidWeb = Platform.OS === 'web' && typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
 const zoomPresets = [
   { label: '1x', value: 0 },
   { label: '1.5x', value: 0.15 },
@@ -83,7 +84,7 @@ export default function ScanScreen() {
   const [lookupError, setLookupError] = useState('');
   const [lookupPending, setLookupPending] = useState(false);
   const [lastScannedIsbn, setLastScannedIsbn] = useState('');
-  const [zoom, setZoom] = useState(0.15);
+  const [zoom, setZoom] = useState(isAndroidWeb ? 0 : 0.15);
   const [torchEnabled, setTorchEnabled] = useState(false);
   const scanInFlightRef = useRef(false);
   const {
@@ -222,6 +223,52 @@ export default function ScanScreen() {
     }
   }
 
+  async function scanBarcodePhotoFromDevice() {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') {
+      setLookupError('Camera photo fallback is only available in the mobile browser flow.');
+      return;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.setAttribute('capture', 'environment');
+
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) {
+        return;
+      }
+
+      const objectUrl = URL.createObjectURL(file);
+      setLookupError('');
+      setLookupMessage('Scanning barcode from captured photo...');
+      setCameraDebug('Scanning still image fallback');
+
+      try {
+        const results = await scanFromURLAsync(objectUrl, barcodeTypes);
+        const firstMatch = results.find((result) => isValidIsbnLength(sanitizeIsbn(result.data)));
+
+        if (!firstMatch) {
+          setLookupMessage('No usable ISBN found in that photo. Try again with the barcode filling more of the frame and better light.');
+          return;
+        }
+
+        const isbn = sanitizeIsbn(firstMatch.data);
+        setLastScannedIsbn(isbn);
+        setLookupMessage(`Found ISBN ${isbn} in the photo. Looking up book data...`);
+        await hydrateFromIsbn(isbn);
+      } catch (error) {
+        setLookupMessage('');
+        setLookupError(error instanceof Error ? error.message : 'Could not scan the captured barcode photo.');
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+
+    input.click();
+  }
+
   async function hydrateFromIsbn(rawValue?: string) {
     if (lookupPending) {
       return;
@@ -355,7 +402,7 @@ export default function ScanScreen() {
         {cameraEnabled && !prefersNativeScanner && permissionState === 'granted' && (cameraAvailable !== false || canAttemptCameraOnThisPlatform) ? (
           <View className="gap-4">
             <Text className="text-sm leading-6 text-mist">
-              Point the camera at the barcode on the back of the book and keep the lines inside the guide frame. Move a little farther back than feels natural, let autofocus settle, and use 1.5x or 2x zoom if the barcode is tiny.
+              Point the camera at the barcode on the back of the book and keep the lines inside the guide frame. On Android web, start at 1x first. If the live preview stays blurry, use the photo fallback below so the phone can autofocus a still image properly.
             </Text>
             <View className="h-[360px] overflow-hidden rounded-[28px] border border-line bg-night">
               <CameraView
@@ -363,7 +410,7 @@ export default function ScanScreen() {
                 facing="back"
                 zoom={zoom}
                 enableTorch={torchEnabled}
-                autofocus="off"
+                autofocus={isAndroidWeb ? undefined : 'off'}
                 ratio="16:9"
                 onCameraReady={() => {
                   setPreviewReady(true);
@@ -379,15 +426,12 @@ export default function ScanScreen() {
                 barcodeScannerSettings={{ barcodeTypes }}
               />
               {previewReady ? (
-                <Pressable
-                  className="absolute inset-0 items-center justify-center"
-                  onPress={() => setCameraDebug('Tap-to-focus is not exposed by this Expo camera runtime; use zoom and hold steady instead.')}
-                >
+                <View className="absolute inset-0 items-center justify-center pointer-events-none">
                   <View className="h-[150px] w-[78%] rounded-[24px] border-2 border-parchment/90 bg-transparent" />
                   <Text className="mt-4 rounded-full bg-black/40 px-4 py-2 text-xs text-parchment">
-                    Tap for focus help • center the barcode inside the frame
+                    Center the barcode inside the frame
                   </Text>
-                </Pressable>
+                </View>
               ) : null}
               {!previewReady ? (
                 <View className="absolute inset-0 items-center justify-center px-6">
@@ -415,12 +459,13 @@ export default function ScanScreen() {
                 />
               </View>
               <Text className="text-sm leading-6 text-mist">
-                Tap the preview for guidance, not true tap-to-focus. Expo camera in this runtime does not expose focus-point control, because apparently that would be too convenient.
+                Android web preview focus is still device/browser-dependent. If it stays blurry, use the fallback button below to capture a still photo of the barcode instead.
               </Text>
             </View>
             <View className="flex-row flex-wrap gap-3">
               <Button label="Pause scanner" variant="secondary" onPress={() => setCameraEnabled(false)} />
               <Button label="Lookup current ISBN" variant="secondary" onPress={() => void hydrateFromIsbn()} disabled={lookupPending} />
+              {isAndroidWeb ? <Button label="Use camera photo fallback" variant="secondary" onPress={() => void scanBarcodePhotoFromDevice()} /> : null}
             </View>
           </View>
         ) : null}
@@ -441,6 +486,7 @@ export default function ScanScreen() {
           <Text className="text-sm leading-6 text-ink">previewReady: {formatDebugValue(previewReady)}</Text>
           <Text className="text-sm leading-6 text-ink">nativeScannerActive: {formatDebugValue(nativeScannerActive)}</Text>
           <Text className="text-sm leading-6 text-ink">prefersNativeScanner: {formatDebugValue(prefersNativeScanner)}</Text>
+          <Text className="text-sm leading-6 text-ink">isAndroidWeb: {formatDebugValue(isAndroidWeb)}</Text>
           <Text className="text-sm leading-6 text-ink">zoom: {zoom}</Text>
           <Text className="text-sm leading-6 text-ink">torchEnabled: {formatDebugValue(torchEnabled)}</Text>
           <Text className="text-sm leading-6 text-ink">cameraDebug: {cameraDebug}</Text>
