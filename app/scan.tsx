@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CameraView, BarcodeScanningResult, BarcodeType, scanFromURLAsync, useCameraPermissions } from 'expo-camera';
 import { ErrorBoundaryProps, useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
-import { Alert, Platform, ScrollView, Text, View } from 'react-native';
+import { Alert, Linking, Platform, ScrollView, Text, View } from 'react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AndroidWebLiveIsbnScanner } from '@/components/book/android-web-live-isbn-scanner';
@@ -27,6 +27,7 @@ const defaultValues: BookFormValues = {
 
 const barcodeTypes: BarcodeType[] = ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'];
 const canAttemptCameraOnThisPlatform = Platform.OS === 'web';
+const shouldProbeCameraAvailability = Platform.OS === 'web';
 const prefersNativeScanner = Platform.OS !== 'web' && CameraView.isModernBarcodeScannerAvailable;
 const isAndroidWeb = Platform.OS === 'web' && typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
 const zoomPresets = [
@@ -82,6 +83,7 @@ export default function ScanScreen() {
   const [previewReady, setPreviewReady] = useState(false);
   const [nativeScannerActive, setNativeScannerActive] = useState(false);
   const [lookupMessage, setLookupMessage] = useState('');
+  const [permissionDebug, setPermissionDebug] = useState('permission hook not resolved yet');
   const [lookupError, setLookupError] = useState('');
   const [lookupPending, setLookupPending] = useState(false);
   const [lastScannedIsbn, setLastScannedIsbn] = useState('');
@@ -129,6 +131,14 @@ export default function ScanScreen() {
     let active = true;
 
     async function detectCameraAvailability() {
+      if (!shouldProbeCameraAvailability) {
+        if (active) {
+          setCameraAvailable(null);
+          setCameraDebug('Skipping CameraView.isAvailableAsync probe on native app runtime; allowing permission + mount flow');
+        }
+        return;
+      }
+
       try {
         const isAvailableAsync = (CameraView as typeof CameraView & { isAvailableAsync?: () => Promise<boolean> }).isAvailableAsync;
 
@@ -150,11 +160,8 @@ export default function ScanScreen() {
         }
       } catch (error) {
         if (active) {
-          setCameraAvailable(canAttemptCameraOnThisPlatform ? null : false);
+          setCameraAvailable(null);
           setCameraDebug(error instanceof Error ? error.message : 'Unknown camera availability error');
-          if (!canAttemptCameraOnThisPlatform) {
-            setCameraError('This device or browser is not exposing a usable camera. Manual ISBN lookup still works below.');
-          }
         }
       }
     }
@@ -169,7 +176,19 @@ export default function ScanScreen() {
   const permissionState = useMemo(() => {
     if (!permission) return 'unknown';
     if (permission.granted) return 'granted';
+    if (permission.canAskAgain) return 'blocked-awaiting-grant';
     return 'denied';
+  }, [permission]);
+
+  useEffect(() => {
+    if (!permission) {
+      setPermissionDebug('permission hook not resolved yet');
+      return;
+    }
+
+    setPermissionDebug(
+      `status=${permission.status}, granted=${permission.granted ? 'true' : 'false'}, canAskAgain=${permission.canAskAgain ? 'true' : 'false'}, expires=${permission.expires}`
+    );
   }, [permission]);
 
   async function openNativeScanner() {
@@ -185,6 +204,15 @@ export default function ScanScreen() {
       setNativeScannerActive(false);
       setLookupMessage('');
       setCameraError(error instanceof Error ? error.message : 'Could not open the device barcode scanner.');
+    }
+  }
+
+  async function openAppSettings() {
+    try {
+      await Linking.openSettings();
+      setCameraDebug('Opened app settings for manual camera permission changes');
+    } catch (error) {
+      setCameraError(error instanceof Error ? error.message : 'Could not open app settings.');
     }
   }
 
@@ -207,7 +235,11 @@ export default function ScanScreen() {
       setCameraDebug(`Permission request resolved: granted=${result.granted ? 'true' : 'false'}`);
       if (!result.granted) {
         setCameraEnabled(false);
-        setCameraError('Camera permission was denied. You can still paste an ISBN and lookup the book manually.');
+        setCameraError(
+          result.canAskAgain
+            ? 'Camera permission was not granted yet. Try again, or use manual ISBN lookup below.'
+            : 'Camera permission is denied at the OS level for this app. Open app settings, allow Camera, then come back and retry.'
+        );
         return;
       }
 
@@ -412,7 +444,12 @@ export default function ScanScreen() {
                 ? 'On this device we can use the native barcode scanner instead of the embedded camera box, which should behave a lot less like a drunk potato.'
                 : 'Allow camera access to scan on Android or web. If that does not work on this device, manual ISBN lookup below will still do the job.'}
             </Text>
-            <Button label={prefersNativeScanner ? 'Open device scanner' : 'Allow camera'} onPress={() => void enableCamera()} />
+            <View className="flex-row flex-wrap gap-3">
+              <Button label={prefersNativeScanner ? 'Open device scanner' : 'Allow camera'} onPress={() => void enableCamera()} />
+              {permission && !permission.granted ? (
+                <Button label="Open app settings" variant="secondary" onPress={() => void openAppSettings()} />
+              ) : null}
+            </View>
           </View>
         ) : null}
 
@@ -511,6 +548,7 @@ export default function ScanScreen() {
           <Text className="text-xs uppercase tracking-[2px] text-mist">Debug</Text>
           <Text className="mt-2 text-sm leading-6 text-ink">platform: {Platform.OS}</Text>
           <Text className="text-sm leading-6 text-ink">permission: {permissionState}</Text>
+          <Text className="text-sm leading-6 text-ink">permissionDebug: {permissionDebug}</Text>
           <Text className="text-sm leading-6 text-ink">cameraEnabled: {formatDebugValue(cameraEnabled)}</Text>
           <Text className="text-sm leading-6 text-ink">cameraAvailable: {formatDebugValue(cameraAvailable)}</Text>
           <Text className="text-sm leading-6 text-ink">lookupPending: {formatDebugValue(lookupPending)}</Text>
@@ -521,6 +559,10 @@ export default function ScanScreen() {
           <Text className="text-sm leading-6 text-ink">zoom: {zoom}</Text>
           <Text className="text-sm leading-6 text-ink">torchEnabled: {formatDebugValue(torchEnabled)}</Text>
           <Text className="text-sm leading-6 text-ink">cameraDebug: {cameraDebug}</Text>
+          <View className="mt-3 flex-row flex-wrap gap-3">
+            <Button label="Retry permission" variant="secondary" onPress={() => void enableCamera()} />
+            <Button label="Open settings" variant="secondary" onPress={() => void openAppSettings()} />
+          </View>
         </View>
 
         {isAndroidWeb ? (
