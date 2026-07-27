@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { getAuthRedirectUrl } from '@/lib/auth-redirect';
-import { hasSupabaseEnv } from '@/lib/env';
+import { hasSupabaseEnv, missingSupabaseEnvMessage } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
 
 const authSchema = z.object({
@@ -18,8 +18,6 @@ const authSchema = z.object({
 type AuthFormValues = z.infer<typeof authSchema>;
 
 export function AuthCard() {
-  const envMissingMessage =
-    'This build is missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Set them in EAS so the Android app can talk to your real Supabase project instead of the placeholder host.';
   const {
     control,
     handleSubmit,
@@ -36,7 +34,7 @@ export function AuthCard() {
   const signUp = useMutation({
     mutationFn: async ({ email, password }: AuthFormValues) => {
       if (!hasSupabaseEnv) {
-        throw new Error(envMissingMessage);
+        throw new Error(missingSupabaseEnvMessage);
       }
 
       const { error } = await supabase.auth.signUp({
@@ -55,7 +53,7 @@ export function AuthCard() {
   const signIn = useMutation({
     mutationFn: async ({ email, password }: AuthFormValues) => {
       if (!hasSupabaseEnv) {
-        throw new Error(envMissingMessage);
+        throw new Error(missingSupabaseEnvMessage);
       }
 
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -67,7 +65,7 @@ export function AuthCard() {
   const magicLink = useMutation({
     mutationFn: async () => {
       if (!hasSupabaseEnv) {
-        throw new Error(envMissingMessage);
+        throw new Error(missingSupabaseEnvMessage);
       }
 
       const email = getValues('email');
@@ -103,7 +101,7 @@ export function AuthCard() {
 
       {!hasSupabaseEnv ? (
         <View className="rounded-[24px] border border-red-300 bg-red-50 p-4">
-          <Text className="text-sm leading-6 text-red-900">{envMissingMessage}</Text>
+          <Text className="text-sm leading-6 text-red-900">{missingSupabaseEnvMessage}</Text>
         </View>
       ) : null}
 

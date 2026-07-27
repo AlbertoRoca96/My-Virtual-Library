@@ -7,3 +7,6 @@ export const env = {
 };
 
 export const hasSupabaseEnv = Boolean(env.supabaseUrl && env.supabasePublishableKey);
+
+export const missingSupabaseEnvMessage =
+  'This build is missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Set them in EAS so the Android app can talk to your real Supabase project.';
