@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CameraView, BarcodeScanningResult, BarcodeType, useCameraPermissions } from 'expo-camera';
 import { ErrorBoundaryProps, useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
-import { Alert, Platform, ScrollView, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,11 @@ const defaultValues: BookFormValues = {
 
 const barcodeTypes: BarcodeType[] = ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'];
 const canAttemptCameraOnThisPlatform = Platform.OS === 'web';
+const zoomPresets = [
+  { label: '1x', value: 0 },
+  { label: '1.5x', value: 0.15 },
+  { label: '2x', value: 0.3 },
+] as const;
 
 function formatDebugValue(value: boolean | string | null | undefined) {
   if (typeof value === 'boolean') {
@@ -76,6 +81,8 @@ export default function ScanScreen() {
   const [lookupError, setLookupError] = useState('');
   const [lookupPending, setLookupPending] = useState(false);
   const [lastScannedIsbn, setLastScannedIsbn] = useState('');
+  const [zoom, setZoom] = useState(0.15);
+  const [torchEnabled, setTorchEnabled] = useState(false);
   const scanInFlightRef = useRef(false);
   const {
     control,
@@ -140,6 +147,7 @@ export default function ScanScreen() {
     setLookupError('');
     setLookupMessage('');
     setPreviewReady(false);
+    setTorchEnabled(false);
     scanInFlightRef.current = false;
 
     if (cameraAvailable === false && !canAttemptCameraOnThisPlatform) {
@@ -282,12 +290,16 @@ export default function ScanScreen() {
         {cameraEnabled && permissionState === 'granted' && (cameraAvailable !== false || canAttemptCameraOnThisPlatform) ? (
           <View className="gap-4">
             <Text className="text-sm leading-6 text-mist">
-              Point the camera at the barcode on the back of the book. We pause the scanner after one hit so it does not machine-gun the same ISBN five times like an overexcited pigeon.
+              Point the camera at the barcode on the back of the book and keep the lines inside the guide frame. Move a little farther back than feels natural, let autofocus settle, and use 1.5x or 2x zoom if the barcode is tiny.
             </Text>
-            <View className="h-[320px] overflow-hidden rounded-[28px] border border-line bg-night">
+            <View className="h-[360px] overflow-hidden rounded-[28px] border border-line bg-night">
               <CameraView
                 style={{ flex: 1, width: '100%' }}
                 facing="back"
+                zoom={zoom}
+                enableTorch={torchEnabled}
+                autofocus="off"
+                ratio="16:9"
                 onCameraReady={() => {
                   setPreviewReady(true);
                   setCameraDebug('Camera preview is ready');
@@ -301,6 +313,17 @@ export default function ScanScreen() {
                 onBarcodeScanned={cameraEnabled ? handleBarcodeScanned : undefined}
                 barcodeScannerSettings={{ barcodeTypes }}
               />
+              {previewReady ? (
+                <Pressable
+                  className="absolute inset-0 items-center justify-center"
+                  onPress={() => setCameraDebug('Tap-to-focus is not exposed by this Expo camera runtime; use zoom and hold steady instead.')}
+                >
+                  <View className="h-[150px] w-[78%] rounded-[24px] border-2 border-parchment/90 bg-transparent" />
+                  <Text className="mt-4 rounded-full bg-black/40 px-4 py-2 text-xs text-parchment">
+                    Tap for focus help • center the barcode inside the frame
+                  </Text>
+                </Pressable>
+              ) : null}
               {!previewReady ? (
                 <View className="absolute inset-0 items-center justify-center px-6">
                   <Text className="text-center text-sm leading-6 text-parchment">
@@ -308,6 +331,27 @@ export default function ScanScreen() {
                   </Text>
                 </View>
               ) : null}
+            </View>
+            <View className="gap-3 rounded-[24px] border border-line bg-parchment p-4">
+              <Text className="text-xs uppercase tracking-[2px] text-mist">Scan quality</Text>
+              <View className="flex-row flex-wrap gap-2">
+                {zoomPresets.map((preset) => (
+                  <Button
+                    key={preset.label}
+                    label={preset.label}
+                    variant={zoom === preset.value ? 'primary' : 'secondary'}
+                    onPress={() => setZoom(preset.value)}
+                  />
+                ))}
+                <Button
+                  label={torchEnabled ? 'Torch on' : 'Torch off'}
+                  variant={torchEnabled ? 'primary' : 'secondary'}
+                  onPress={() => setTorchEnabled((current) => !current)}
+                />
+              </View>
+              <Text className="text-sm leading-6 text-mist">
+                Tap the preview for guidance, not true tap-to-focus. Expo camera in this runtime does not expose focus-point control, because apparently that would be too convenient.
+              </Text>
             </View>
             <View className="flex-row flex-wrap gap-3">
               <Button label="Pause scanner" variant="secondary" onPress={() => setCameraEnabled(false)} />
@@ -330,6 +374,8 @@ export default function ScanScreen() {
           <Text className="text-sm leading-6 text-ink">cameraAvailable: {formatDebugValue(cameraAvailable)}</Text>
           <Text className="text-sm leading-6 text-ink">lookupPending: {formatDebugValue(lookupPending)}</Text>
           <Text className="text-sm leading-6 text-ink">previewReady: {formatDebugValue(previewReady)}</Text>
+          <Text className="text-sm leading-6 text-ink">zoom: {zoom}</Text>
+          <Text className="text-sm leading-6 text-ink">torchEnabled: {formatDebugValue(torchEnabled)}</Text>
           <Text className="text-sm leading-6 text-ink">cameraDebug: {cameraDebug}</Text>
         </View>
 
