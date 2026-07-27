@@ -3,7 +3,7 @@ import { CameraView, BarcodeScanningResult, BarcodeType, scanFromURLAsync, useCa
 import { ErrorBoundaryProps, useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { Alert, Platform, ScrollView, Text, View } from 'react-native';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AndroidWebLiveIsbnScanner } from '@/components/book/android-web-live-isbn-scanner';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,7 @@ const zoomPresets = [
 function formatDebugValue(value: boolean | string | null | undefined) {
   if (typeof value === 'boolean') {
     return value ? 'true' : 'false';
-  }
+  }, [lookupPending]);
 
   if (value === null) {
     return 'null';
@@ -310,7 +310,7 @@ export default function ScanScreen() {
     }
   }
 
-  function handleBarcodeScanned(result: BarcodeScanningResult) {
+  const handleBarcodeScanned = useCallback((result: BarcodeScanningResult) => {
     if (scanInFlightRef.current || lookupPending) {
       return;
     }
@@ -331,7 +331,7 @@ export default function ScanScreen() {
     void hydrateFromIsbn(isbn).finally(() => {
       scanInFlightRef.current = false;
     });
-  }
+  }, [lookupPending]);
 
   const onSubmit = (values: BookFormValues) => {
     createBook.mutate(
@@ -391,9 +391,14 @@ export default function ScanScreen() {
               <AndroidWebLiveIsbnScanner
                 active={cameraEnabled}
                 onDebug={setCameraDebug}
-                onDetected={(rawValue) => {
-                  handleBarcodeScanned({ type: 'ean13', data: rawValue, cornerPoints: [], bounds: { origin: { x: 0, y: 0 }, size: { width: 0, height: 0 } } });
-                }}
+                onDetected={(rawValue) =>
+                  handleBarcodeScanned({
+                    type: 'ean13',
+                    data: rawValue,
+                    cornerPoints: [],
+                    bounds: { origin: { x: 0, y: 0 }, size: { width: 0, height: 0 } },
+                  })
+                }
               />
             )}
           </View>

@@ -23,6 +23,8 @@ type AndroidWebLiveIsbnScannerProps = {
 const DETECTION_INTERVAL_MS = 350;
 
 export function AndroidWebLiveIsbnScanner({ active, onDetected, onDebug }: AndroidWebLiveIsbnScannerProps) {
+  const onDetectedRef = useRef(onDetected);
+  const onDebugRef = useRef(onDebug);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<BarcodeDetectorLike | null>(null);
@@ -35,8 +37,13 @@ export function AndroidWebLiveIsbnScanner({ active, onDetected, onDebug }: Andro
   const Video = useMemo(() => createElement('video', { ref: videoRef, autoPlay: true, playsInline: true, muted: true }), []);
 
   useEffect(() => {
+    onDetectedRef.current = onDetected;
+    onDebugRef.current = onDebug;
+  }, [onDetected, onDebug]);
+
+  useEffect(() => {
     if (typeof window === 'undefined' || typeof navigator === 'undefined') {
-      onDebug('window or navigator unavailable');
+      onDebugRef.current('window or navigator unavailable');
       return;
     }
 
@@ -47,11 +54,11 @@ export function AndroidWebLiveIsbnScanner({ active, onDetected, onDebug }: Andro
 
     const BarcodeDetectorClass = (window as Window & { BarcodeDetector?: BarcodeDetectorCtor }).BarcodeDetector;
     if (!navigator.mediaDevices?.getUserMedia) {
-      onDebug('getUserMedia is unavailable');
+      onDebugRef.current('getUserMedia is unavailable');
       return;
     }
     if (!BarcodeDetectorClass) {
-      onDebug('BarcodeDetector is unavailable in this browser');
+      onDebugRef.current('BarcodeDetector is unavailable in this browser');
       return;
     }
 
@@ -64,7 +71,7 @@ export function AndroidWebLiveIsbnScanner({ active, onDetected, onDebug }: Andro
 
     async function startScanner() {
       try {
-        onDebug('Requesting Android web camera stream');
+        onDebugRef.current('Requesting Android web camera stream');
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: false,
           video: {
@@ -82,7 +89,7 @@ export function AndroidWebLiveIsbnScanner({ active, onDetected, onDebug }: Andro
         streamRef.current = stream;
         const video = videoRef.current;
         if (!video) {
-          onDebug('Video element missing after getUserMedia');
+          onDebugRef.current('Video element missing after getUserMedia');
           stopTracks(stream);
           return;
         }
@@ -90,7 +97,7 @@ export function AndroidWebLiveIsbnScanner({ active, onDetected, onDebug }: Andro
         video.srcObject = stream;
         await video.play();
         setPreviewReady(true);
-        onDebug('Android web camera preview ready');
+        onDebugRef.current('Android web camera preview ready');
 
         const [track] = stream.getVideoTracks();
         const capabilities = (track?.getCapabilities?.() ?? {}) as MediaTrackCapabilitiesWithFocus;
@@ -106,9 +113,9 @@ export function AndroidWebLiveIsbnScanner({ active, onDetected, onDebug }: Andro
 
         if (Object.keys(advancedConstraints).length > 0) {
           await track.applyConstraints({ advanced: [advancedConstraints] });
-          onDebug(`Applied video track constraints: ${JSON.stringify(advancedConstraints)}`);
+          onDebugRef.current(`Applied video track constraints: ${JSON.stringify(advancedConstraints)}`);
         } else {
-          onDebug('No advanced focus constraints exposed by this browser/device');
+          onDebugRef.current('No advanced focus constraints exposed by this browser/device');
         }
 
         intervalRef.current = window.setInterval(async () => {
@@ -129,14 +136,14 @@ export function AndroidWebLiveIsbnScanner({ active, onDetected, onDebug }: Andro
             }
 
             detectedRef.current = true;
-            onDebug(`BarcodeDetector found value: ${firstRawValue}`);
-            onDetected(firstRawValue);
+            onDebugRef.current(`BarcodeDetector found value: ${firstRawValue}`);
+            onDetectedRef.current(firstRawValue);
           } catch (error) {
-            onDebug(error instanceof Error ? error.message : 'BarcodeDetector failed during live scan');
+            onDebugRef.current(error instanceof Error ? error.message : 'BarcodeDetector failed during live scan');
           }
         }, DETECTION_INTERVAL_MS);
       } catch (error) {
-        onDebug(error instanceof Error ? error.message : 'Failed to start Android web live scanner');
+        onDebugRef.current(error instanceof Error ? error.message : 'Failed to start Android web live scanner');
       }
     }
 
@@ -146,7 +153,7 @@ export function AndroidWebLiveIsbnScanner({ active, onDetected, onDebug }: Andro
       cancelled = true;
       stopScanner();
     };
-  }, [active, onDebug, onDetected]);
+  }, [active]);
 
   async function toggleTorch() {
     const track = streamRef.current?.getVideoTracks?.()[0];
@@ -158,9 +165,9 @@ export function AndroidWebLiveIsbnScanner({ active, onDetected, onDebug }: Andro
     try {
       await track.applyConstraints({ advanced: [{ torch: nextTorchEnabled }] });
       setTorchEnabled(nextTorchEnabled);
-      onDebug(`Torch ${nextTorchEnabled ? 'enabled' : 'disabled'}`);
+      onDebugRef.current(`Torch ${nextTorchEnabled ? 'enabled' : 'disabled'}`);
     } catch (error) {
-      onDebug(error instanceof Error ? error.message : 'Failed to toggle torch');
+      onDebugRef.current(error instanceof Error ? error.message : 'Failed to toggle torch');
     }
   }
 
