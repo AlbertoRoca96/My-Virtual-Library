@@ -55,6 +55,60 @@ or
 npm run start
 ```
 
+## Expo phone testing
+
+This repo can run through Expo so you can scan a QR code on Android/iPhone and test it as an app instead of only through the GitHub Pages URL.
+
+### First-time setup
+
+```bash
+cd C:\Users\alroc\My-Virtual-Library
+npm install
+npx expo install
+```
+
+Install **Expo Go** on your phone first.
+
+### Start the Expo dev server
+
+```bash
+cd C:\Users\alroc\My-Virtual-Library
+npx expo start
+```
+
+If your phone and laptop are on the same Wi-Fi, scan the QR code from the terminal/browser with Expo Go.
+
+### If LAN is annoying, use tunnel mode
+
+```bash
+cd C:\Users\alroc\My-Virtual-Library
+npx expo start --tunnel
+```
+
+### Open directly on Android from the terminal
+
+```bash
+cd C:\Users\alroc\My-Virtual-Library
+npm run android
+```
+
+That opens the Expo project on Android when a device/emulator is available.
+
+### Useful reset command if Metro gets weird
+
+```bash
+cd C:\Users\alroc\My-Virtual-Library
+npx expo start -c
+```
+
+### Current platform reality
+
+- **GitHub Pages URL** = web testing
+- **Expo Go / Expo dev server** = app-style testing on phone
+- **EAS build later** = installable APK / AAB / App Store style builds
+
+For Android specifically, Expo Go testing is the next correct move if you want the app to behave more like an actual app view instead of only a mobile browser page.
+
 ## Supabase setup
 
 Paste and run:
