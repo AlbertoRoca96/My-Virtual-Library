@@ -2,6 +2,7 @@
   "expo": {
     "name": "My Virtual Library",
     "slug": "my-virtual-library",
+    "owner": "al96",
     "scheme": "myvirtuallibrary",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -29,7 +30,8 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "permissions": [
-        "CAMERA"
+        "CAMERA",
+        "android.permission.CAMERA"
       ],
       "predictiveBackGestureEnabled": false
     },
@@ -44,6 +46,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "41b33a76-0096-40d4-8b16-56b8183d0d27"
+      }
     }
   }
 }
