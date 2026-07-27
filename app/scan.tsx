@@ -38,7 +38,7 @@ const zoomPresets = [
 function formatDebugValue(value: boolean | string | null | undefined) {
   if (typeof value === 'boolean') {
     return value ? 'true' : 'false';
-  }, [lookupPending]);
+  }
 
   if (value === null) {
     return 'null';
