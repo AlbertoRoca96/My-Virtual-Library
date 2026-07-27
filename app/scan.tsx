@@ -11,30 +11,20 @@ import { AuthCard } from '@/features/auth/auth-card';
 import { BookFormFields } from '@/features/books/book-form-fields';
 import { BookFormValues, bookFormSchema, parseGenreString } from '@/features/books/book-form-schema';
 import { sanitizeIsbn, isValidIsbnLength } from '@/features/books/isbn';
-import { fetchBookDraftByIsbn } from '@/features/books/open-library';
+import { MetadataRescueCard } from '@/features/books/metadata-rescue-card';
+import { ScannerDebugCard } from '@/features/books/scanner-debug-card';
+import { fetchBookDraftByClues, fetchBookDraftByIsbn } from '@/features/books/open-library';
 import { useCreateBook } from '@/features/books/use-books';
 import { useAuth } from '@/lib/auth';
 
-const defaultValues: BookFormValues = {
-  title: '',
-  author: '',
-  publisher: '',
-  isbn: '',
-  description: '',
-  readingStatus: 'owned',
-  genres: '',
-};
+const defaultValues: BookFormValues = { title: '', author: '', publisher: '', isbn: '', description: '', readingStatus: 'owned', genres: '' };
 
 const barcodeTypes: BarcodeType[] = ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'];
 const canAttemptCameraOnThisPlatform = Platform.OS === 'web';
 const shouldProbeCameraAvailability = Platform.OS === 'web';
 const prefersNativeScanner = Platform.OS !== 'web' && CameraView.isModernBarcodeScannerAvailable;
 const isAndroidWeb = Platform.OS === 'web' && typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
-const zoomPresets = [
-  { label: '1x', value: 0 },
-  { label: '1.5x', value: 0.15 },
-  { label: '2x', value: 0.3 },
-] as const;
+const zoomPresets = [{ label: '1x', value: 0 }, { label: '1.5x', value: 0.15 }, { label: '2x', value: 0.3 }] as const;
 
 function formatDebugValue(value: boolean | string | null | undefined) {
   if (typeof value === 'boolean') {
@@ -56,16 +46,10 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (
     <ScrollView className="flex-1 bg-parchment" contentContainerStyle={{ padding: 24, gap: 24 }}>
       <View className="gap-4 rounded-[28px] border border-red-300 bg-red-50 p-6">
-        <Text className="text-3xl text-red-900" style={{ fontFamily: 'Georgia' }}>
-          Scan page crashed
-        </Text>
-        <Text className="text-base leading-7 text-red-900">
-          Instead of a majestic blank white void, here is the actual error. Tiny progress. You can still use manual ISBN lookup after we fix this.
-        </Text>
+        <Text className="text-3xl text-red-900" style={{ fontFamily: 'Georgia' }}>Scan page crashed</Text>
+        <Text className="text-base leading-7 text-red-900">Instead of a majestic blank white void, here is the actual error. Tiny progress. You can still use manual ISBN lookup after we fix this.</Text>
         <Text className="rounded-[20px] bg-white px-4 py-3 font-mono text-sm text-red-900">{error.message}</Text>
-        <View className="gap-3 md:flex-row">
-          <Button label="Try again" onPress={retry} />
-        </View>
+        <View className="gap-3 md:flex-row"><Button label="Try again" onPress={retry} /></View>
       </View>
     </ScrollView>
   );
@@ -86,20 +70,13 @@ export default function ScanScreen() {
   const [permissionDebug, setPermissionDebug] = useState('permission hook not resolved yet');
   const [lookupError, setLookupError] = useState('');
   const [lookupPending, setLookupPending] = useState(false);
+  const [metadataRescueVisible, setMetadataRescueVisible] = useState(false);
+  const [metadataRescuePending, setMetadataRescuePending] = useState(false);
   const [lastScannedIsbn, setLastScannedIsbn] = useState('');
   const [zoom, setZoom] = useState(isAndroidWeb ? 0 : 0.15);
   const [torchEnabled, setTorchEnabled] = useState(false);
   const scanInFlightRef = useRef(false);
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    getValues,
-    reset,
-  } = useForm<BookFormValues>({
-    resolver: zodResolver(bookFormSchema),
-    defaultValues,
-  });
+  const { control, handleSubmit, formState: { errors }, getValues, reset } = useForm<BookFormValues>({ resolver: zodResolver(bookFormSchema), defaultValues });
 
   useEffect(() => {
     if (!prefersNativeScanner) {
@@ -186,9 +163,7 @@ export default function ScanScreen() {
       return;
     }
 
-    setPermissionDebug(
-      `status=${permission.status}, granted=${permission.granted ? 'true' : 'false'}, canAskAgain=${permission.canAskAgain ? 'true' : 'false'}, expires=${permission.expires}`
-    );
+    setPermissionDebug(`status=${permission.status}, granted=${permission.granted ? 'true' : 'false'}, canAskAgain=${permission.canAskAgain ? 'true' : 'false'}, expires=${permission.expires}`);
   }, [permission]);
 
   async function openNativeScanner() {
@@ -220,6 +195,7 @@ export default function ScanScreen() {
     setCameraError('');
     setLookupError('');
     setLookupMessage('');
+    setMetadataRescueVisible(false);
     setPreviewReady(false);
     setTorchEnabled(false);
     scanInFlightRef.current = false;
@@ -318,15 +294,19 @@ export default function ScanScreen() {
 
     setLookupPending(true);
     setLookupError('');
+    setMetadataRescueVisible(false);
     setLookupMessage('Looking up book data...');
 
     try {
       const draft = await fetchBookDraftByIsbn(isbn);
       if (!draft) {
-        setLookupMessage('Nothing came back from Open Library. You can still fill the form manually.');
+        setLookupMessage('Nothing came back from Open Library. Use the form below with clues from the front/back cover and try the metadata rescue search.');
+        setMetadataRescueVisible(true);
         reset({ ...getValues(), isbn });
         return;
       }
+
+      setMetadataRescueVisible(false);
 
       reset({
         ...getValues(),
@@ -364,6 +344,40 @@ export default function ScanScreen() {
       scanInFlightRef.current = false;
     });
   }, [lookupPending]);
+
+  async function rescueMetadataFromCoverClues() {
+    if (metadataRescuePending) {
+      return;
+    }
+
+    const values = getValues();
+    const hasClues = [values.title, values.author, values.publisher, values.isbn].some((value) => (value ?? '').trim().length > 0);
+    if (!hasClues) {
+      setLookupError('Add at least a title, author, publisher, or ISBN clue before trying metadata rescue.');
+      return;
+    }
+
+    setMetadataRescuePending(true);
+    setLookupError('');
+    setLookupMessage('Searching broader metadata using your cover clues...');
+
+    try {
+      const draft = await fetchBookDraftByClues(values);
+      if (!draft) {
+        setLookupMessage('Still nothing solid came back. At least now the form is right there for manual cleanup instead of a dead end.');
+        return;
+      }
+
+      reset({ ...values, ...draft, isbn: sanitizeIsbn(values.isbn ?? draft.isbn ?? '') });
+      setMetadataRescueVisible(false);
+      setLookupMessage('Metadata rescue found a likely match. Tidy anything weird, then save.');
+    } catch (error) {
+      setLookupError(error instanceof Error ? error.message : 'Metadata rescue failed.');
+      setLookupMessage('');
+    } finally {
+      setMetadataRescuePending(false);
+    }
+  }
 
   const onSubmit = (values: BookFormValues) => {
     createBook.mutate(
@@ -544,26 +558,23 @@ export default function ScanScreen() {
           </View>
         ) : null}
 
-        <View className="rounded-[20px] border border-line bg-[#F8F3EA] p-4">
-          <Text className="text-xs uppercase tracking-[2px] text-mist">Debug</Text>
-          <Text className="mt-2 text-sm leading-6 text-ink">platform: {Platform.OS}</Text>
-          <Text className="text-sm leading-6 text-ink">permission: {permissionState}</Text>
-          <Text className="text-sm leading-6 text-ink">permissionDebug: {permissionDebug}</Text>
-          <Text className="text-sm leading-6 text-ink">cameraEnabled: {formatDebugValue(cameraEnabled)}</Text>
-          <Text className="text-sm leading-6 text-ink">cameraAvailable: {formatDebugValue(cameraAvailable)}</Text>
-          <Text className="text-sm leading-6 text-ink">lookupPending: {formatDebugValue(lookupPending)}</Text>
-          <Text className="text-sm leading-6 text-ink">previewReady: {formatDebugValue(previewReady)}</Text>
-          <Text className="text-sm leading-6 text-ink">nativeScannerActive: {formatDebugValue(nativeScannerActive)}</Text>
-          <Text className="text-sm leading-6 text-ink">prefersNativeScanner: {formatDebugValue(prefersNativeScanner)}</Text>
-          <Text className="text-sm leading-6 text-ink">isAndroidWeb: {formatDebugValue(isAndroidWeb)}</Text>
-          <Text className="text-sm leading-6 text-ink">zoom: {zoom}</Text>
-          <Text className="text-sm leading-6 text-ink">torchEnabled: {formatDebugValue(torchEnabled)}</Text>
-          <Text className="text-sm leading-6 text-ink">cameraDebug: {cameraDebug}</Text>
-          <View className="mt-3 flex-row flex-wrap gap-3">
-            <Button label="Retry permission" variant="secondary" onPress={() => void enableCamera()} />
-            <Button label="Open settings" variant="secondary" onPress={() => void openAppSettings()} />
-          </View>
-        </View>
+        <ScannerDebugCard
+          permissionState={permissionState}
+          permissionDebug={permissionDebug}
+          cameraEnabled={formatDebugValue(cameraEnabled)}
+          cameraAvailable={formatDebugValue(cameraAvailable)}
+          lookupPending={formatDebugValue(lookupPending)}
+          previewReady={formatDebugValue(previewReady)}
+          nativeScannerActive={formatDebugValue(nativeScannerActive)}
+          prefersNativeScanner={formatDebugValue(prefersNativeScanner)}
+          isAndroidWeb={formatDebugValue(isAndroidWeb)}
+          zoom={zoom}
+          torchEnabled={formatDebugValue(torchEnabled)}
+          cameraDebug={cameraDebug}
+          onRetryPermission={() => void enableCamera()}
+          onOpenSettings={() => void openAppSettings()}
+        />
+        <MetadataRescueCard visible={metadataRescueVisible} pending={metadataRescuePending} onSearch={() => void rescueMetadataFromCoverClues()} />
 
         {isAndroidWeb ? (
           <Text className="text-sm text-mist">
@@ -580,6 +591,7 @@ export default function ScanScreen() {
         <BookFormFields control={control} errors={errors} />
         <View className="flex-row flex-wrap gap-3">
           <Button label={lookupPending ? 'Looking up...' : 'Lookup ISBN'} variant="secondary" onPress={() => void hydrateFromIsbn()} disabled={lookupPending} />
+          <Button label={metadataRescuePending ? 'Searching clues...' : 'Rescue with cover clues'} variant="secondary" onPress={() => void rescueMetadataFromCoverClues()} disabled={metadataRescuePending} />
           <Button label={createBook.isPending ? 'Saving...' : 'Save scanned book'} onPress={handleSubmit(onSubmit)} disabled={createBook.isPending} />
         </View>
       </View>
