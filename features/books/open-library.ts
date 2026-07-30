@@ -6,6 +6,7 @@ export type BookLookupDraft = Pick<BookFormValues, 'title' | 'author' | 'publish
 
 type OpenLibraryBook = {
   title?: string;
+  subtitle?: string;
   authors?: { name?: string }[];
   publishers?: { name?: string }[];
   subjects?: { name?: string }[];
@@ -15,6 +16,7 @@ type OpenLibraryBook = {
 
 type OpenLibrarySearchDoc = {
   title?: string;
+  subtitle?: string;
   author_name?: string[];
   publisher?: string[];
   subject?: string[];
@@ -22,8 +24,20 @@ type OpenLibrarySearchDoc = {
   isbn?: string[];
 };
 
+function resolveDisplayTitle(title?: string, subtitle?: string) {
+  const cleanTitle = title?.trim() ?? '';
+  const cleanSubtitle = subtitle?.trim() ?? '';
+
+  if (!cleanSubtitle) return cleanTitle;
+  if (!cleanTitle) return cleanSubtitle;
+  if (cleanTitle.toLowerCase().includes(cleanSubtitle.toLowerCase())) return cleanTitle;
+  if (/series|chronicles|saga|collection/i.test(cleanTitle)) return cleanSubtitle;
+  return `${cleanTitle}: ${cleanSubtitle}`;
+}
+
 function buildDraftFromMetadata(input: {
   title?: string;
+  subtitle?: string;
   authors?: string[];
   publishers?: string[];
   subjects?: string[];
@@ -37,7 +51,7 @@ function buildDraftFromMetadata(input: {
   const descriptionParts = [input.publishDate, input.notes].filter(Boolean);
 
   return {
-    title: input.title ?? '',
+    title: resolveDisplayTitle(input.title, input.subtitle),
     author: authors,
     publisher: publishers,
     isbn: sanitizeIsbn(input.isbn ?? ''),
@@ -66,6 +80,7 @@ export async function fetchBookDraftByIsbn(rawIsbn: string): Promise<BookLookupD
 
   return buildDraftFromMetadata({
     title: book.title,
+    subtitle: book.subtitle,
     authors: (book.authors ?? []).map((author) => author.name ?? '').filter(Boolean),
     publishers: (book.publishers ?? []).map((publisher) => publisher.name ?? '').filter(Boolean),
     subjects: (book.subjects ?? []).map((subject) => subject.name ?? '').filter(Boolean),
@@ -110,6 +125,7 @@ export async function fetchBookDraftByClues(input: {
 
   return buildDraftFromMetadata({
     title: book.title,
+    subtitle: book.subtitle,
     authors: book.author_name,
     publishers: book.publisher?.slice(0, 2),
     subjects: book.subject,

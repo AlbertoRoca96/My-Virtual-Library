@@ -12,6 +12,8 @@ import { BookFormFields } from '@/features/books/book-form-fields';
 import { BookFormValues, bookFormSchema, parseGenreString } from '@/features/books/book-form-schema';
 import { sanitizeIsbn, isValidIsbnLength } from '@/features/books/isbn';
 import { MetadataRescueCard } from '@/features/books/metadata-rescue-card';
+import { ScanFormActionBar } from '@/features/books/scan-form-action-bar';
+import { ScanPageHeader } from '@/features/books/scan-page-header';
 import { ScannerDebugCard } from '@/features/books/scanner-debug-card';
 import { fetchBookDraftByClues, fetchBookDraftByIsbn } from '@/features/books/open-library';
 import { useCreateBook } from '@/features/books/use-books';
@@ -43,16 +45,7 @@ function formatDebugValue(value: boolean | string | null | undefined) {
 }
 
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
-  return (
-    <ScrollView className="flex-1 bg-parchment" contentContainerStyle={{ padding: 24, gap: 24 }}>
-      <View className="gap-4 rounded-[28px] border border-red-300 bg-red-50 p-6">
-        <Text className="text-3xl text-red-900" style={{ fontFamily: 'Georgia' }}>Scan page crashed</Text>
-        <Text className="text-base leading-7 text-red-900">Instead of a majestic blank white void, here is the actual error. Tiny progress. You can still use manual ISBN lookup after we fix this.</Text>
-        <Text className="rounded-[20px] bg-white px-4 py-3 font-mono text-sm text-red-900">{error.message}</Text>
-        <View className="gap-3 md:flex-row"><Button label="Try again" onPress={retry} /></View>
-      </View>
-    </ScrollView>
-  );
+  return <ScrollView className="flex-1 bg-parchment" contentContainerStyle={{ padding: 24, gap: 24 }}><View className="gap-4 rounded-[28px] border border-red-300 bg-red-50 p-6"><Text className="text-3xl text-red-900" style={{ fontFamily: 'Georgia' }}>Scan page crashed</Text><Text className="text-base leading-7 text-red-900">Instead of a majestic blank white void, here is the actual error. Tiny progress. You can still use manual ISBN lookup after we fix this.</Text><Text className="rounded-[20px] bg-white px-4 py-3 font-mono text-sm text-red-900">{error.message}</Text><View className="gap-3 md:flex-row"><Button label="Try again" onPress={retry} /></View></View></ScrollView>;
 }
 
 export default function ScanScreen() {
@@ -73,6 +66,9 @@ export default function ScanScreen() {
   const [metadataRescueVisible, setMetadataRescueVisible] = useState(false);
   const [metadataRescuePending, setMetadataRescuePending] = useState(false);
   const [lastScannedIsbn, setLastScannedIsbn] = useState('');
+  const [saveDebug, setSaveDebug] = useState('save idle');
+  const [saveErrorDebug, setSaveErrorDebug] = useState('none');
+  const [titleDebug, setTitleDebug] = useState('no lookup result yet');
   const [zoom, setZoom] = useState(isAndroidWeb ? 0 : 0.15);
   const [torchEnabled, setTorchEnabled] = useState(false);
   const scanInFlightRef = useRef(false);
@@ -165,6 +161,18 @@ export default function ScanScreen() {
 
     setPermissionDebug(`status=${permission.status}, granted=${permission.granted ? 'true' : 'false'}, canAskAgain=${permission.canAskAgain ? 'true' : 'false'}, expires=${permission.expires}`);
   }, [permission]);
+
+  function clearBookForm() {
+    reset(defaultValues);
+    setLastScannedIsbn('');
+    setLookupMessage('');
+    setLookupError('');
+    setMetadataRescueVisible(false);
+    setMetadataRescuePending(false);
+    setSaveDebug('form cleared');
+    setSaveErrorDebug('none');
+    setTitleDebug('form cleared; no lookup result yet');
+  }
 
   async function openNativeScanner() {
     setLookupError('');
@@ -300,6 +308,7 @@ export default function ScanScreen() {
     try {
       const draft = await fetchBookDraftByIsbn(isbn);
       if (!draft) {
+        setTitleDebug(`ISBN lookup returned null for ${isbn}`);
         setLookupMessage('Nothing came back from Open Library. Use the form below with clues from the front/back cover and try the metadata rescue search.');
         setMetadataRescueVisible(true);
         reset({ ...getValues(), isbn });
@@ -307,7 +316,7 @@ export default function ScanScreen() {
       }
 
       setMetadataRescueVisible(false);
-
+      setTitleDebug(`ISBN lookup title resolved to: ${draft.title || '[empty]'}`);
       reset({
         ...getValues(),
         ...draft,
@@ -364,10 +373,12 @@ export default function ScanScreen() {
     try {
       const draft = await fetchBookDraftByClues(values);
       if (!draft) {
+        setTitleDebug('Metadata rescue returned null');
         setLookupMessage('Still nothing solid came back. At least now the form is right there for manual cleanup instead of a dead end.');
         return;
       }
 
+      setTitleDebug(`Metadata rescue title resolved to: ${draft.title || '[empty]'}`);
       reset({ ...values, ...draft, isbn: sanitizeIsbn(values.isbn ?? draft.isbn ?? '') });
       setMetadataRescueVisible(false);
       setLookupMessage('Metadata rescue found a likely match. Tidy anything weird, then save.');
@@ -380,22 +391,26 @@ export default function ScanScreen() {
   }
 
   const onSubmit = (values: BookFormValues) => {
-    createBook.mutate(
-      {
-        ...values,
-        isbn: sanitizeIsbn(values.isbn),
-        genres: parseGenreString(values.genres),
+    const payload = {
+      ...values,
+      isbn: sanitizeIsbn(values.isbn),
+      genres: parseGenreString(values.genres),
+    };
+
+    setSaveDebug(`saving isbn=${payload.isbn || '[empty]'} title=${payload.title || '[empty]'} genres=${payload.genres.join('|') || '[none]'} status=${payload.readingStatus}`);
+    setSaveErrorDebug('none');
+
+    createBook.mutate(payload, {
+      onSuccess: () => {
+        setSaveDebug('save succeeded');
+        Alert.alert('Book saved', 'Scanned book added to your library.');
+        router.push('/library');
       },
-      {
-        onSuccess: () => {
-          Alert.alert('Book saved', 'Scanned book added to your library.');
-          router.push('/library');
-        },
-        onError: (error: Error) => {
-          Alert.alert('Save failed', error.message);
-        },
-      }
-    );
+      onError: (error: Error & { code?: string; details?: string; hint?: string }) => {
+        setSaveErrorDebug(`name=${error.name || 'Error'} code=${error.code || 'n/a'} message=${error.message || 'n/a'} details=${error.details || 'n/a'} hint=${error.hint || 'n/a'}`);
+        Alert.alert('Save failed', error.message);
+      },
+    });
   };
 
   if (!user && !loading) {
@@ -408,14 +423,7 @@ export default function ScanScreen() {
 
   return (
     <ScrollView className="flex-1 bg-parchment" contentContainerStyle={{ padding: 24, gap: 24 }}>
-      <View className="gap-3 rounded-[28px] border border-line bg-paper p-6">
-        <Text className="text-3xl text-ink" style={{ fontFamily: 'Georgia' }}>
-          Scan ISBN
-        </Text>
-        <Text className="text-base leading-7 text-mist">
-          We ask for camera access first on every device. If scanning works, great. If the browser or phone behaves like a tiny goblin, manual ISBN lookup still lets you autofill and edit before saving.
-        </Text>
-      </View>
+      <ScanPageHeader />
 
       <View className="gap-4 rounded-[28px] border border-line bg-paper p-5">
         {isAndroidWeb ? (
@@ -467,19 +475,7 @@ export default function ScanScreen() {
           </View>
         ) : null}
 
-        {nativeScannerActive ? (
-          <View className="gap-3 rounded-[24px] border border-line bg-parchment p-5">
-            <Text className="text-lg text-ink" style={{ fontFamily: 'Georgia' }}>
-              Native scanner open
-            </Text>
-            <Text className="text-base leading-7 text-mist">
-              Use the device barcode scanner UI to scan the ISBN. If it closes without a result, tap the button below to reopen it or type the ISBN manually.
-            </Text>
-            <View className="flex-row flex-wrap gap-3">
-              <Button label="Reopen scanner" variant="secondary" onPress={() => void openNativeScanner()} />
-            </View>
-          </View>
-        ) : null}
+        {nativeScannerActive ? <View className="gap-3 rounded-[24px] border border-line bg-parchment p-5"><Text className="text-lg text-ink" style={{ fontFamily: 'Georgia' }}>Native scanner open</Text><Text className="text-base leading-7 text-mist">Use the device barcode scanner UI to scan the ISBN. If it closes without a result, tap the button below to reopen it or type the ISBN manually.</Text><View className="flex-row flex-wrap gap-3"><Button label="Reopen scanner" variant="secondary" onPress={() => void openNativeScanner()} /></View></View> : null}
 
         {cameraEnabled && !isAndroidWeb && !prefersNativeScanner && permissionState === 'granted' && (cameraAvailable !== false || canAttemptCameraOnThisPlatform) ? (
           <View className="gap-4">
@@ -571,16 +567,14 @@ export default function ScanScreen() {
           zoom={zoom}
           torchEnabled={formatDebugValue(torchEnabled)}
           cameraDebug={cameraDebug}
+          saveDebug={saveDebug}
+          saveErrorDebug={saveErrorDebug}
+          titleDebug={titleDebug}
           onRetryPermission={() => void enableCamera()}
           onOpenSettings={() => void openAppSettings()}
         />
         <MetadataRescueCard visible={metadataRescueVisible} pending={metadataRescuePending} onSearch={() => void rescueMetadataFromCoverClues()} />
-
-        {isAndroidWeb ? (
-          <Text className="text-sm text-mist">
-            Android web scan mode: live detection first, photo fallback second, then autofill + manual review.
-          </Text>
-        ) : null}
+        {isAndroidWeb ? <Text className="text-sm text-mist">Android web scan mode: live detection first, photo fallback second, then autofill + manual review.</Text> : null}
         {lastScannedIsbn ? <Text className="text-sm text-mist">Last scanned ISBN: {lastScannedIsbn}</Text> : null}
         {cameraError ? <Text className="text-sm text-red-700">{cameraError}</Text> : null}
         {lookupMessage ? <Text className="text-sm text-accent">{lookupMessage}</Text> : null}
@@ -590,9 +584,15 @@ export default function ScanScreen() {
       <View className="gap-4 rounded-[28px] border border-line bg-paper p-6">
         <BookFormFields control={control} errors={errors} />
         <View className="flex-row flex-wrap gap-3">
-          <Button label={lookupPending ? 'Looking up...' : 'Lookup ISBN'} variant="secondary" onPress={() => void hydrateFromIsbn()} disabled={lookupPending} />
-          <Button label={metadataRescuePending ? 'Searching clues...' : 'Rescue with cover clues'} variant="secondary" onPress={() => void rescueMetadataFromCoverClues()} disabled={metadataRescuePending} />
-          <Button label={createBook.isPending ? 'Saving...' : 'Save scanned book'} onPress={handleSubmit(onSubmit)} disabled={createBook.isPending} />
+          <ScanFormActionBar
+            lookupPending={lookupPending}
+            metadataRescuePending={metadataRescuePending}
+            savePending={createBook.isPending}
+            onClear={clearBookForm}
+            onLookup={() => void hydrateFromIsbn()}
+            onRescue={() => void rescueMetadataFromCoverClues()}
+            onSave={handleSubmit(onSubmit)}
+          />
         </View>
       </View>
     </ScrollView>

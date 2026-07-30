@@ -70,8 +70,16 @@ async function ensureGenres(genreNames: string[]) {
     return [] as Genre[];
   }
 
-  const { error: upsertError } = await supabase.from('genres').upsert(names.map((name) => ({ name })), { onConflict: 'name' });
-  if (upsertError) throw upsertError;
+  const { data: existingGenres, error: existingError } = await supabase.from('genres').select('id, name').in('name', names);
+  if (existingError) throw existingError;
+
+  const existingNameSet = new Set((existingGenres ?? []).map((genre) => genre.name));
+  const missingNames = names.filter((name) => !existingNameSet.has(name));
+
+  if (missingNames.length > 0) {
+    const { error: insertError } = await supabase.from('genres').insert(missingNames.map((name) => ({ name })));
+    if (insertError) throw insertError;
+  }
 
   const { data, error } = await supabase.from('genres').select('id, name').in('name', names);
   if (error) throw error;

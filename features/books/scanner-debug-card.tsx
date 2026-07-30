@@ -15,6 +15,9 @@ type ScannerDebugCardProps = {
   zoom: number;
   torchEnabled: string;
   cameraDebug: string;
+  saveDebug: string;
+  saveErrorDebug: string;
+  titleDebug: string;
   onRetryPermission: () => void;
   onOpenSettings: () => void;
 };
@@ -36,6 +39,9 @@ export function ScannerDebugCard(props: ScannerDebugCardProps) {
       <Text className="text-sm leading-6 text-ink">zoom: {props.zoom}</Text>
       <Text className="text-sm leading-6 text-ink">torchEnabled: {props.torchEnabled}</Text>
       <Text className="text-sm leading-6 text-ink">cameraDebug: {props.cameraDebug}</Text>
+      <Text className="text-sm leading-6 text-ink">titleDebug: {props.titleDebug}</Text>
+      <Text className="text-sm leading-6 text-ink">saveDebug: {props.saveDebug}</Text>
+      <Text className="text-sm leading-6 text-ink">saveErrorDebug: {props.saveErrorDebug}</Text>
       <View className="mt-3 flex-row flex-wrap gap-3">
         <Button label="Retry permission" variant="secondary" onPress={props.onRetryPermission} />
         <Button label="Open settings" variant="secondary" onPress={props.onOpenSettings} />
