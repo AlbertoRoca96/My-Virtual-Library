@@ -87,6 +87,16 @@ export async function fetchBooks() {
 }
 
 export async function createBook(input: BookInput) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError) throw authError;
+  if (!user) {
+    throw new Error('You must be signed in before saving books.');
+  }
+
   const genres = await ensureGenres(input.genres);
   const isbn = input.isbn?.trim() ?? '';
   const cleanedIsbn10 = isbn.length === 10 ? isbn : null;
@@ -95,6 +105,7 @@ export async function createBook(input: BookInput) {
   const { data, error } = await supabase
     .from('books')
     .insert({
+      user_id: user.id,
       title: input.title.trim(),
       author: input.author.trim(),
       publisher: input.publisher?.trim() || null,
