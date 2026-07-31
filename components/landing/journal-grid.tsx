@@ -11,7 +11,7 @@ const entries = [
   },
   {
     title: 'Room tone',
-    body: 'Warm parchment, dark ink, old-library softness, and enough visual drama to make a spreadsheet cry in the corner.',
+    body: 'Warm parchment, dark ink, old-bookshelf softness, and enough visual drama to make a spreadsheet cry in the corner.',
   },
 ];
 

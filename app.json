@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "My Virtual Library",
-    "slug": "my-virtual-library",
+    "name": "My Virtual Bookshelf",
+    "slug": "my-virtual-bookshelf",
     "owner": "al96",
-    "scheme": "myvirtuallibrary",
+    "scheme": "myvirtualbookshelf",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,13 +16,13 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.albertoroca.myvirtuallibrary",
+      "bundleIdentifier": "com.albertoroca.myvirtualbookshelf",
       "infoPlist": {
         "NSCameraUsageDescription": "Use the camera to scan book barcodes and ISBNs."
       }
     },
     "android": {
-      "package": "com.albertoroca.myvirtuallibrary",
+      "package": "com.albertoroca.myvirtualbookshelf",
       "adaptiveIcon": {
         "backgroundColor": "#F5F0E8",
         "foregroundImage": "./assets/android-icon-foreground.png",

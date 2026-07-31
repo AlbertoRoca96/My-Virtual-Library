@@ -93,7 +93,7 @@ export default function LibraryScreen() {
             No books yet
           </Text>
           <Text className="mt-2 text-base leading-7 text-mist">
-            Add your first book once the SQL is in place. If you already added one and still see this, RLS or migrations are probably still missing because computers love little rituals.
+            Add your first book once the SQL is in place. If you already added one and still see this, RLS or migrations are probably still missing because computers love little rituals. Your virtual bookshelf is waiting.
           </Text>
         </View>
       ) : null}

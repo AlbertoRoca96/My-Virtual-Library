@@ -1,4 +1,4 @@
-# My Virtual Library
+# My Virtual Bookshelf
 
 A cozy cross-platform book catalogue built with Expo, React Native Web, and Supabase.
 
@@ -21,7 +21,7 @@ This repo now includes:
 
 - Supabase auth wiring for email/password and magic links
 - real books CRUD hooks against Supabase
-- live library and add-book screens
+- live bookshelf and add-book screens
 - warm vintage-inspired starter UI
 - Expo Router navigation
 - NativeWind configuration
@@ -62,7 +62,7 @@ This repo can run through Expo so you can scan a QR code on Android/iPhone and t
 ### First-time setup
 
 ```bash
-cd C:\Users\alroc\My-Virtual-Library
+cd C:\Users\alroc\My-Virtual-Bookshelf
 npm install
 npx expo install
 ```
@@ -72,7 +72,7 @@ Install **Expo Go** on your phone first.
 ### Start the Expo dev server
 
 ```bash
-cd C:\Users\alroc\My-Virtual-Library
+cd C:\Users\alroc\My-Virtual-Bookshelf
 npx expo start
 ```
 
@@ -81,14 +81,14 @@ If your phone and laptop are on the same Wi-Fi, scan the QR code from the termin
 ### If LAN is annoying, use tunnel mode
 
 ```bash
-cd C:\Users\alroc\My-Virtual-Library
+cd C:\Users\alroc\My-Virtual-Bookshelf
 npx expo start --tunnel
 ```
 
 ### Open directly on Android from the terminal
 
 ```bash
-cd C:\Users\alroc\My-Virtual-Library
+cd C:\Users\alroc\My-Virtual-Bookshelf
 npm run android
 ```
 
@@ -97,7 +97,7 @@ That opens the Expo project on Android when a device/emulator is available.
 ### Useful reset command if Metro gets weird
 
 ```bash
-cd C:\Users\alroc\My-Virtual-Library
+cd C:\Users\alroc\My-Virtual-Bookshelf
 npx expo start -c
 ```
 

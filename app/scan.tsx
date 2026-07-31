@@ -403,7 +403,7 @@ export default function ScanScreen() {
     createBook.mutate(payload, {
       onSuccess: () => {
         setSaveDebug('save succeeded');
-        Alert.alert('Book saved', 'Scanned book added to your library.');
+        Alert.alert('Book saved', 'Scanned book added to your virtual bookshelf.');
         router.push('/library');
       },
       onError: (error: Error & { code?: string; details?: string; hint?: string }) => {

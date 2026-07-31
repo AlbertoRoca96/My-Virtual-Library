@@ -4,7 +4,7 @@ type SlugParams = {
   slug?: string | string[];
 };
 
-const GITHUB_PAGES_BASE_SEGMENT = 'My-Virtual-Library';
+const GITHUB_PAGES_BASE_SEGMENT = 'My-Virtual-Bookshelf';
 
 export default function CatchAllRedirect() {
   const params = useLocalSearchParams<SlugParams>();

@@ -91,7 +91,7 @@ It will:
 4. deploy `dist/` to GitHub Pages
 
 Because this is a project repo, Pages will live under:
-- `/My-Virtual-Library`
+- `/My-Virtual-Bookshelf`
 
 The rewrite step exists because GitHub Pages loves adding just enough friction to stay interesting.
 

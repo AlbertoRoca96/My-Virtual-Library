@@ -11,7 +11,7 @@ import { AuthProvider } from '@/lib/auth';
 import { queryClient } from '@/lib/query-client';
 import { palette } from '@/lib/theme';
 
-const GITHUB_PAGES_BASE_SEGMENT = '/My-Virtual-Library';
+const GITHUB_PAGES_BASE_SEGMENT = '/My-Virtual-Bookshelf';
 
 function GithubPagesRouteNormalizer() {
   const pathname = usePathname();
@@ -61,7 +61,7 @@ export default function RootLayout() {
             }}
           >
             <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="library" options={{ title: 'My Library' }} />
+            <Stack.Screen name="library" options={{ title: 'My Virtual Bookshelf' }} />
             <Stack.Screen name="add-book" options={{ title: 'Add a Book' }} />
             <Stack.Screen name="scan" options={{ title: 'Scan ISBN' }} />
             <Stack.Screen name="profile" options={{ title: 'Edit Sanctuary' }} />

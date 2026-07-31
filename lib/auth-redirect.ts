@@ -1,7 +1,7 @@
 import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 
-const GITHUB_PAGES_SEGMENT = 'My-Virtual-Library';
+const GITHUB_PAGES_SEGMENT = 'My-Virtual-Bookshelf';
 
 function getGithubPagesBasePath(pathname: string) {
   const segments = pathname.split('/').filter(Boolean);

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const distDir = path.resolve('dist');
-const basePath = process.env.GH_PAGES_BASE_PATH || '/My-Virtual-Library';
+const basePath = process.env.GH_PAGES_BASE_PATH || '/My-Virtual-Bookshelf';
 const normalizedBasePath = basePath.startsWith('/') ? basePath : `/${basePath}`;
 const cleanBasePath = normalizedBasePath.endsWith('/') ? normalizedBasePath.slice(0, -1) : normalizedBasePath;
 const textExtensions = new Set(['.html', '.js', '.css', '.json', '.txt']);
