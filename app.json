@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "My Virtual Bookshelf",
-    "slug": "my-virtual-bookshelf",
+    "slug": "my-virtual-library",
     "owner": "al96",
     "scheme": "myvirtualbookshelf",
     "version": "1.0.0",
