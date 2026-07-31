@@ -404,7 +404,7 @@ export default function ScanScreen() {
       onSuccess: () => {
         setSaveDebug('save succeeded');
         Alert.alert('Book saved', 'Scanned book added to your virtual bookshelf.');
-        router.push('/library');
+        router.push('/bookshelf');
       },
       onError: (error: Error & { code?: string; details?: string; hint?: string }) => {
         setSaveErrorDebug(`name=${error.name || 'Error'} code=${error.code || 'n/a'} message=${error.message || 'n/a'} details=${error.details || 'n/a'} hint=${error.hint || 'n/a'}`);

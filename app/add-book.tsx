@@ -40,7 +40,7 @@ export default function AddBookScreen() {
       {
         onSuccess: () => {
           Alert.alert('Book saved', 'Your book has been added to Supabase.');
-          router.push('/library');
+          router.push('/bookshelf');
         },
         onError: (error: Error) => {
           Alert.alert('Save failed', error.message);

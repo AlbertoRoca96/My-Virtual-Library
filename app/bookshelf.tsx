@@ -9,7 +9,7 @@ import { useBooks, useDeleteBook } from '@/features/books/use-books';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 
-export default function LibraryScreen() {
+export default function BookshelfScreen() {
   const { user, loading } = useAuth();
   const booksQuery = useBooks();
   const deleteBook = useDeleteBook();

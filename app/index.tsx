@@ -158,7 +158,7 @@ export default function HomeScreen() {
     <View className="gap-3">
       <View className="gap-3 md:flex-row md:flex-wrap">
         <View className="w-full md:min-w-[180px] md:flex-1">
-          <Button className="w-full" label="Browse bookshelf" onPress={() => router.push('/library')} />
+          <Button className="w-full" label="Browse bookshelf" onPress={() => router.push('/bookshelf')} />
         </View>
         <View className="w-full md:min-w-[180px] md:flex-1">
           <Button className="w-full" label="Scan ISBN" variant="secondary" onPress={() => router.push('/scan')} />

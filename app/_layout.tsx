@@ -61,7 +61,7 @@ export default function RootLayout() {
             }}
           >
             <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="library" options={{ title: 'My Virtual Bookshelf' }} />
+            <Stack.Screen name="bookshelf" options={{ title: 'My Virtual Bookshelf' }} />
             <Stack.Screen name="add-book" options={{ title: 'Add a Book' }} />
             <Stack.Screen name="scan" options={{ title: 'Scan ISBN' }} />
             <Stack.Screen name="profile" options={{ title: 'Edit Sanctuary' }} />
